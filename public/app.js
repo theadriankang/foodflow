@@ -23,7 +23,7 @@ const dark = () => document.documentElement.dataset.theme === 'dark'
 const MANDATE = 40;
 
 const state = { view:'store', court:'all', cat:'All', cart:[], order:null, ledger:[], needs:{}, asked:0,
-                wizard:null, fulfil:'pickup', carrier:null };
+                wizard:null, fulfil:'pickup', carrier:null, lastShown:[], picking:null };
 
 /* ══════════ STOREFRONT ══════════ */
 function catsFor(){
@@ -433,11 +433,12 @@ const deliveryFee = () => state.fulfil === 'deliver' && state.carrier ? quoteFor
 const platformFee = () => state.cart.length ? 0.60 : 0;
 const fee = platformFee;
 const total = () => subtotal() + platformFee() + deliveryFee();
-function addToCart(id){
+function addToCart(id, picks){
   const d = byId(id); if (!d) return;
-  const ex = state.cart.find(i => i.id === id);
-  if (ex) ex.qty++; else state.cart.push({ ...d, qty:1 });
-  note('proposed', `Agent added ${d.name} — ${money(d.price)}`);
+  const key = picks && picks.length ? picks.join('|') : '';
+  const ex = state.cart.find(i => i.id === id && (i.picks || []).join('|') === key);
+  if (ex) ex.qty++; else state.cart.push({ ...d, qty:1, picks: picks || [] });
+  note('proposed', `Agent added ${d.name}${key ? ' (' + picks.join(', ') + ')' : ''} — ${money(d.price)}`);
   toast(`${d.name} added`); sync();
 }
 function sync(){
@@ -541,6 +542,17 @@ const GAPS = [
 ];
 function replyLocal(text){
   const q = text.toLowerCase().trim();
+
+  /* offline: still answer "what's in it" from the catalog rather than pitching */
+  if (/(what'?s in|whats in|ingredient|what can i (pick|choose)|tell me (more|about)|more about|describe|what comes with)/.test(q)){
+    const all = allDishes();
+    const hit = all.find(d => q.includes(d.name.toLowerCase()))
+      || all.find(d => d.name.toLowerCase().replace(/[()]/g,'').split(/\s+/).filter(w=>w.length>3).every(w=>q.includes(w)))
+      || (/yong ?tau ?foo|ytf|young tofu/.test(q) ? all.find(d=>d.name.includes('Yong Tau Foo')) : null)
+      || (/\bmala\b/.test(q) ? all.find(d=>d.name.includes('Mala')) : null)
+      || ((state.lastShown||[]).length === 1 ? byId(state.lastShown[0]) : null);
+    if (hit) return { say: describeLocal(hit), items: [], focusId: hit.id };
+  }
   if (/^(hi|hey|hello|yo|good (morning|afternoon|evening))\b/.test(q))
     return { say:`Hey. I know all <b>${allDishes().length}</b> dishes across <b>${COURTS.filter(c=>c.live).length}</b> canteens on campus — what are you craving?`,
              chips:['Something soupy under $4','Halal and filling','I\'m in a rush'] };
@@ -607,6 +619,7 @@ async function reply(text){
       body: JSON.stringify({
         prompt: text,
         needs: state.needs,
+        lastShown: state.lastShown || [],
         fulfil: state.fulfil,
         cart: state.cart.map(i => ({ id:i.id, name:i.name, qty:i.qty, price:i.price, stall:i.stall }))
       })
@@ -624,12 +637,26 @@ async function reply(text){
       items: (d.itemIds || []).map(byId).filter(Boolean),
       why:   d.why || [],
       chips: d.chips || null,
+      focusId: d.focusId || null,
       go:    !!d.go
     };
   } catch (err){
     console.warn('[foodflow] agent unreachable, using local engine:', err.message);
     return replyLocal(text);
   }
+}
+
+function describeLocal(d){
+  const b = [`<b>${d.name}</b> — ${money(d.price)} at ${d.stall}, ${d.courtName}. ${d.desc}`];
+  if (d.ing?.length) b.push(`It comes with ${d.ing.slice(0,-1).join(', ')} and ${d.ing[d.ing.length-1]}.`);
+  const f = [];
+  if (d.diet.includes('vegan')) f.push('vegan'); else if (d.diet.includes('vegetarian')) f.push('vegetarian');
+  if (d.diet.includes('halal')) f.push('halal');
+  if (d.has.length) f.push(`contains ${d.has.join(', ')}`);
+  if (f.length) b.push(f.join(' · ') + '.');
+  b.push(`About ${d.prep} minutes, ${d.walk} minutes' walk away.`);
+  if (d.opts) b.push(`${d.opts.label} — tap the ones you want below.`);
+  return b.join(' ');
 }
 
 /* chat render */
@@ -643,11 +670,56 @@ function recs(items, whys){ const w = document.createElement('div'); w.className
       <button class="rec-add" data-add="${d.id}">Add</button></div>
     ${whys&&whys[i]?`<div class="why"><em>↳</em> ${whys[i]}</div>`:''}`).join('') + `</div>`;
   log.appendChild(w); scroll(); }
+function detailCard(d){
+  const w = document.createElement('div'); w.className = 'msg ai';
+  const picking = state.picking && state.picking.id === d.id ? state.picking.chosen : [];
+  const o = d.opts;
+  w.innerHTML = `<div class="detail">
+      <div class="det-top">
+        <div class="rec-tile" style="background:${dark()?d.tintD:d.tint}">${d.icon}</div>
+        <div class="rec-t"><b>${d.name}</b><span>${money(d.price)} · ${d.stall} · ${d.walk} min walk</span></div>
+      </div>
+      ${d.ing?.length ? `<div class="ing"><span class="ing-l">In it</span>${d.ing.map(i=>`<span class="ing-i">${i}</span>`).join('')}</div>` : ''}
+      ${o ? `<div class="opts" data-for="${d.id}">
+          <div class="opts-h"><span>${o.label}</span><span class="cnt">${picking.length}/${o.pick}</span></div>
+          <div class="opt-list">${o.choices.map(c=>`<button class="opt${picking.includes(c)?' on':''}" data-opt="${c}">${c}</button>`).join('')}</div>
+          <button class="opt-add" data-optadd="${d.id}"${picking.length?'':' disabled'}>${picking.length?`Add with ${picking.length} pick${picking.length>1?'s':''} · ${money(d.price)}`:'Pick at least one'}</button>
+        </div>` : `<button class="rec-add det-add" data-add="${d.id}">Add · ${money(d.price)}</button>`}
+    </div>`;
+  log.appendChild(w); scroll();
+}
+
 function chipRow(list){ const w = document.createElement('div'); w.className='msg ai';
   w.innerHTML = `<div class="chips">${list.map(c=>`<button class="qc" data-say="${c}">${c}</button>`).join('')}</div>`;
   log.appendChild(w); scroll(); }
 function scroll(){ requestAnimationFrame(() => log.scrollTop = log.scrollHeight); }
 log.addEventListener('click', e => {
+  const o = e.target.closest('[data-opt]');
+  if (o){
+    const box = o.closest('.opts'); const d = byId(box.dataset.for); if (!d) return;
+    if (!state.picking || state.picking.id !== d.id) state.picking = { id:d.id, chosen:[] };
+    const c = o.dataset.opt, chosen = state.picking.chosen, at = chosen.indexOf(c);
+    if (at > -1) chosen.splice(at, 1);
+    else if (chosen.length < d.opts.pick) chosen.push(c);
+    else return toast(`That's ${d.opts.pick} already — tap one off first`);
+    o.classList.toggle('on', chosen.includes(c));
+    box.querySelector('.cnt').textContent = `${chosen.length}/${d.opts.pick}`;
+    const btn = box.querySelector('.opt-add');
+    btn.disabled = !chosen.length;
+    btn.textContent = chosen.length ? `Add with ${chosen.length} pick${chosen.length>1?'s':''} · ${money(d.price)}` : 'Pick at least one';
+    return;
+  }
+  const oa = e.target.closest('[data-optadd]');
+  if (oa){
+    const d = byId(oa.dataset.optadd); if (!d) return;
+    const picks = (state.picking && state.picking.id === d.id) ? [...state.picking.chosen] : [];
+    addToCart(d.id, picks);
+    oa.textContent = 'Added'; oa.disabled = true;
+    bubble('ai', `Got it — <b>${d.name}</b> with ${picks.join(', ')}. Anything else, or shall we sort out payment?`);
+    chipRow(['Authorise payment','Something to drink']);
+    state.picking = null;
+    return;
+  }
   const a = e.target.closest('[data-add]');
   if (a){ addToCart(a.dataset.add); a.textContent='Added'; a.classList.add('in'); return; }
   const s = e.target.closest('[data-say]'); if (s) send(s.dataset.say);
@@ -660,7 +732,14 @@ async function send(text){
   await new Promise(r => setTimeout(r, 400 + Math.random()*340)); t.remove();
   const r = await reply(text);
   bubble('ai', r.say);
-  if (r.items) recs(r.items, r.why);
+  if (r.focusId && byId(r.focusId)){
+    state.picking = { id: r.focusId, chosen: [] };
+    detailCard(byId(r.focusId));
+    state.lastShown = [r.focusId];
+  } else if (r.items && r.items.length){
+    recs(r.items, r.why);
+    state.lastShown = r.items.map(d => d.id);
+  }
   if (r.chips) chipRow(r.chips);
   sync();
   if (r.go) setTimeout(openAuth, 400);
@@ -677,7 +756,7 @@ const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
 const SILENCE_MS = 2600;    /* quiet for this long = they've finished talking */
 const MAX_MS     = 45000;   /* hard stop, so a hot mic can't run forever */
 
-let rec = null, listening = false, heard = '', quietTimer = null, capTimer = null;
+let rec = null, listening = false, sealed = false, heard = '', quietTimer = null, capTimer = null;
 
 if (!SR){
   mic.style.opacity = '.4';
@@ -689,6 +768,9 @@ if (!SR){
   rec.continuous = true;
 
   rec.onresult = e => {
+    /* Chrome keeps delivering finals for a moment after stop() — once we've sent,
+       ignore everything, or the tail of the sentence reappears in the box. */
+    if (!listening || sealed) return;
     let interim = '';
     for (let i = e.resultIndex; i < e.results.length; i++){
       const t = e.results[i][0].transcript;
@@ -726,6 +808,7 @@ function resetQuiet(){
 
 function endMic(sendIt){
   const wasListening = listening;
+  sealed = true;
   listening = false;
   clearTimeout(quietTimer); clearTimeout(capTimer);
   try { rec && rec.stop(); } catch (_) {}
@@ -733,12 +816,16 @@ function endMic(sendIt){
   micNote.textContent = 'Every action is logged';
   const text = (heard || inp.value || '').trim();
   heard = '';
-  if (sendIt && wasListening && text){ inp.value = ''; send(text); }
+  inp.value = '';
+  if (sendIt && wasListening && text) send(text);
+  /* let the late events drain before the mic can be armed again */
+  setTimeout(() => { sealed = false; }, 700);
 }
 
 mic.addEventListener('click', () => {
   if (!rec) return toast('Voice input needs Chrome or Edge');
   if (listening) return endMic(true);        /* tap again = send what you've said */
+  if (sealed) return;                        /* still draining the last one */
   heard = ''; inp.value = '';
   try {
     rec.start();
@@ -765,7 +852,7 @@ function drawAuth(){
 
   const orderRows = g.map(k => `
     <div class="grp"><span>${k.stall} · ${k.courtName}</span><span>${money(k.sub)}</span></div>
-    ${k.items.map(i=>`<div class="row"><span><span class="q num">${i.qty}×</span> ${i.name}</span><span>${money(i.price*i.qty)}</span></div>`).join('')}`).join('');
+    ${k.items.map(i=>`<div class="row"><span><span class="q num">${i.qty}×</span> ${i.name}${i.picks&&i.picks.length?`<span class="picks">${i.picks.join(' · ')}</span>`:''}</span><span>${money(i.price*i.qty)}</span></div>`).join('')}`).join('');
 
   const carrierRows = CARRIERS.map(c => `
     <button class="car ${state.carrier?.id===c.id?'on':''}" data-car="${c.id}">

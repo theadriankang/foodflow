@@ -24,6 +24,10 @@ bullet points, never repeat the customer's words back at them. Singapore English
 ("chope", "damn hungry") but don't overdo it.
 
 Rules:
+- ANSWER THE QUESTION THEY ASKED. If they ask what is in a dish, or what they can pick,
+  tell them — using the FOCUS DISH data below — and do not pitch a different dish. Pushing
+  alternatives at someone who asked a direct question is the most annoying thing you can do.
+- Only recommend when they are actually asking for a recommendation.
 - Recommend at most 3 dishes; if one is clearly best, recommend just that one.
 - Ask AT MOST one clarifying question, and only when it would genuinely change your pick.
   Good gaps to ask about: which canteen they're near, rice vs noodles, budget.
@@ -38,6 +42,7 @@ Reply with JSON only:
   "itemIds": ["id", ...],
   "why": ["short reason per item, in the customer's own terms, e.g. 'soupy · no pork · S$3.10'"],
   "chips": ["up to 3 short suggested replies"] or null,
+  "focusId": "id of the dish you are describing, if they asked about one" or null,
   "addIds": [],
   "fulfil": "pickup" | "deliver" | null,
   "go": false
@@ -69,15 +74,33 @@ module.exports = async (req, res) => {
 
   if (!prompt) return res.status(200).json({ say: "Tell me what you're craving.", itemIds: [], needs: prior });
 
+  const lastShown = Array.isArray(body.lastShown) ? body.lastShown : [];
   const needs = E.parse(prompt, prior);
+
+  /* A question about a specific dish is answered from the catalog, not guessed at. */
+  const focus = E.isDetailQuestion(prompt) ? E.findFocus(prompt, lastShown) : null;
   const wantsCheckout = /authoris|authorize|check ?out|\bpay\b|place (the|my) order/i.test(prompt);
   const wantsDelivery = /deliver|send it to me|don'?t want to walk|too far to walk/i.test(prompt);
+
+  if (focus && !KEY) {
+    return res.status(200).json({
+      say: E.describe(focus), itemIds: [focus.id], why: [], chips: null,
+      focusId: focus.id, needs, engine: 'rules'
+    });
+  }
 
   if (!KEY) {
     const out = deterministic(prompt, needs, cart);
     return res.status(200).json({ ...out, engine: 'rules', go: wantsCheckout && cart.length > 0,
                                   fulfil: wantsDelivery ? 'deliver' : null });
   }
+
+  const focusBlock = focus ? {
+    id: focus.id, name: focus.name, price: focus.price, stall: focus.stall, canteen: focus.courtName,
+    description: focus.desc, ingredients: focus.ing || [], contains: focus.has, dietary: focus.diet,
+    prepMin: focus.prep, walkMin: focus.walk,
+    youCanPick: focus.opts ? { label: focus.opts.label, howMany: focus.opts.pick, choices: focus.opts.choices } : null
+  } : null;
 
   const candidates = E.rank(needs).slice(0, 12).map(({ d }) => ({
     id: d.id, name: d.name, price: d.price, stall: d.stall, canteen: d.courtName, walkMin: d.walk,
@@ -99,6 +122,9 @@ module.exports = async (req, res) => {
             `CUSTOMER SAID: ${prompt}\n\n` +
             `WHAT WE KNOW SO FAR: ${JSON.stringify(Object.fromEntries(Object.entries(needs).map(([k, v]) => [k, v.label])))}\n\n` +
             `CART: ${cart.length ? JSON.stringify(cart) : 'empty'}\n\n` +
+            (focusBlock
+              ? `THE CUSTOMER IS ASKING ABOUT THIS DISH — answer about it, do not suggest others:\n${JSON.stringify(focusBlock)}\n\n`
+              : '') +
             `CANDIDATES (recommend only from these): ${JSON.stringify(candidates)}` }
         ]
       })
@@ -113,9 +139,12 @@ module.exports = async (req, res) => {
     const itemIds = (parsed.itemIds || []).filter(id => allowed.has(id)).slice(0, 3);
     const addIds  = (parsed.addIds  || []).filter(id => E.byId(id)).slice(0, 3);
 
+    const focusId = focus ? focus.id : (allowed.has(parsed.focusId) ? parsed.focusId : null);
+
     return res.status(200).json({
       say:    String(parsed.say || 'Here are the closest matches.').slice(0, 600),
-      itemIds,
+      focusId,
+      itemIds: focusId && !itemIds.length ? [focusId] : itemIds,
       why:    Array.isArray(parsed.why) ? parsed.why.slice(0, 3) : itemIds.map(id => E.because(E.byId(id), needs)),
       chips:  Array.isArray(parsed.chips) ? parsed.chips.slice(0, 3) : null,
       addIds,
@@ -126,6 +155,8 @@ module.exports = async (req, res) => {
     });
   } catch (err) {
     console.error('[agent] falling back to rules:', err.message);
+    if (focus) return res.status(200).json({ say: E.describe(focus), itemIds: [focus.id],
+      focusId: focus.id, why: [], chips: null, needs, engine: 'rules-fallback' });
     const out = deterministic(prompt, needs, cart);
     return res.status(200).json({ ...out, engine: 'rules-fallback',
                                   go: wantsCheckout && cart.length > 0,

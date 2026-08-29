@@ -2,7 +2,7 @@
  {
   "id": "deck",
   "name": "The Deck",
-  "loc": "FASS · AS8",
+  "loc": "FASS \u00b7 AS8",
   "walk": 5,
   "live": true,
   "stalls": [
@@ -17,7 +17,7 @@
         "name": "Yong Tau Foo Soup (6 items)",
         "price": 3.1,
         "prep": 7,
-        "icon": "🍲",
+        "icon": "\ud83c\udf72",
         "desc": "Pick your own ingredients in clear soup with bee hoon.",
         "cuisine": "Local",
         "form": "noodles",
@@ -47,13 +47,38 @@
         "courtName": "The Deck",
         "walk": 5,
         "stall": "Yong Tau Foo & Laksa",
-        "cat": "Soup & laksa"
+        "cat": "Soup & laksa",
+        "ing": [
+         "clear anchovy broth",
+         "bee hoon or yellow noodles",
+         "spring onion",
+         "fried shallots",
+         "chilli and sweet sauce on the side"
+        ],
+        "opts": {
+         "label": "Pick 6 ingredients",
+         "pick": 6,
+         "choices": [
+          "Fish ball",
+          "Fish cake",
+          "Tau pok",
+          "Stuffed brinjal",
+          "Stuffed chilli",
+          "Stuffed okra",
+          "Beancurd skin",
+          "Meatball",
+          "Seaweed chicken roll",
+          "Soft tofu",
+          "Long bean",
+          "Button mushroom"
+         ]
+        }
        },
        {
         "name": "Laksa Yong Tau Foo",
         "price": 3.6,
         "prep": 8,
-        "icon": "🍜",
+        "icon": "\ud83c\udf5c",
         "desc": "Same pick-and-mix, in coconut laksa gravy.",
         "cuisine": "Local",
         "form": "noodles",
@@ -83,7 +108,32 @@
         "courtName": "The Deck",
         "walk": 5,
         "stall": "Yong Tau Foo & Laksa",
-        "cat": "Soup & laksa"
+        "cat": "Soup & laksa",
+        "ing": [
+         "coconut laksa gravy",
+         "thick bee hoon",
+         "dried shrimp",
+         "laksa leaf",
+         "sambal"
+        ],
+        "opts": {
+         "label": "Pick 6 ingredients",
+         "pick": 6,
+         "choices": [
+          "Fish ball",
+          "Fish cake",
+          "Tau pok",
+          "Stuffed brinjal",
+          "Stuffed chilli",
+          "Stuffed okra",
+          "Beancurd skin",
+          "Meatball",
+          "Seaweed chicken roll",
+          "Soft tofu",
+          "Long bean",
+          "Button mushroom"
+         ]
+        }
        }
       ]
      }
@@ -100,7 +150,7 @@
         "name": "Ban Mian",
         "price": 3.5,
         "prep": 9,
-        "icon": "🍜",
+        "icon": "\ud83c\udf5c",
         "desc": "Hand-torn noodles in anchovy broth with egg.",
         "cuisine": "Chinese",
         "form": "noodles",
@@ -129,13 +179,21 @@
         "courtName": "The Deck",
         "walk": 5,
         "stall": "Ban Mian & Noodles",
-        "cat": "Noodles"
+        "cat": "Noodles",
+        "ing": [
+         "hand-torn noodles",
+         "anchovy broth",
+         "minced pork",
+         "egg",
+         "ikan bilis",
+         "leafy greens"
+        ]
        },
        {
         "name": "Tomato Minced Meat Noodle",
         "price": 4,
         "prep": 10,
-        "icon": "🍝",
+        "icon": "\ud83c\udf5d",
         "desc": "Tangy tomato broth, minced pork, thin noodles.",
         "cuisine": "Chinese",
         "form": "noodles",
@@ -163,13 +221,20 @@
         "courtName": "The Deck",
         "walk": 5,
         "stall": "Ban Mian & Noodles",
-        "cat": "Noodles"
+        "cat": "Noodles",
+        "ing": [
+         "thin noodles",
+         "tomato broth",
+         "minced pork",
+         "tomato wedges",
+         "spring onion"
+        ]
        },
        {
         "name": "Pork Ribs Noodle",
         "price": 4.5,
         "prep": 11,
-        "icon": "🥣",
+        "icon": "\ud83e\udd63",
         "desc": "Peppery pork rib soup with noodles.",
         "cuisine": "Chinese",
         "form": "noodles",
@@ -197,7 +262,14 @@
         "courtName": "The Deck",
         "walk": 5,
         "stall": "Ban Mian & Noodles",
-        "cat": "Noodles"
+        "cat": "Noodles",
+        "ing": [
+         "pork ribs",
+         "peppery broth",
+         "noodles",
+         "fried garlic",
+         "coriander"
+        ]
        }
       ]
      },
@@ -208,7 +280,7 @@
         "name": "Dumpling Soup",
         "price": 3.5,
         "prep": 8,
-        "icon": "🥟",
+        "icon": "\ud83e\udd5f",
         "desc": "Pork and chive dumplings in clear soup.",
         "cuisine": "Chinese",
         "form": "noodles",
@@ -236,7 +308,13 @@
         "courtName": "The Deck",
         "walk": 5,
         "stall": "Ban Mian & Noodles",
-        "cat": "Dumplings"
+        "cat": "Dumplings",
+        "ing": [
+         "pork and chive dumplings",
+         "clear broth",
+         "leafy greens",
+         "sesame oil"
+        ]
        }
       ]
      }
@@ -253,7 +331,7 @@
         "name": "Chicken Katsu Don",
         "price": 4.3,
         "prep": 10,
-        "icon": "🍱",
+        "icon": "\ud83c\udf71",
         "desc": "Crisp fried cutlet over rice in sweet-savoury sauce.",
         "cuisine": "Japanese",
         "form": "rice",
@@ -282,13 +360,20 @@
         "courtName": "The Deck",
         "walk": 5,
         "stall": "Japanese Food",
-        "cat": "Donburi"
+        "cat": "Donburi",
+        "ing": [
+         "panko chicken cutlet",
+         "short-grain rice",
+         "onion",
+         "egg",
+         "tonkatsu sauce"
+        ]
        },
        {
         "name": "Chicken Katsu Curry Don",
         "price": 4.6,
         "prep": 11,
-        "icon": "🍛",
+        "icon": "\ud83c\udf5b",
         "desc": "Katsu with thick Japanese curry over rice.",
         "cuisine": "Japanese",
         "form": "rice",
@@ -317,13 +402,20 @@
         "courtName": "The Deck",
         "walk": 5,
         "stall": "Japanese Food",
-        "cat": "Donburi"
+        "cat": "Donburi",
+        "ing": [
+         "panko chicken cutlet",
+         "Japanese curry roux",
+         "rice",
+         "carrot",
+         "potato"
+        ]
        },
        {
         "name": "Chicken & Salmon Don",
         "price": 5.6,
         "prep": 12,
-        "icon": "🍣",
+        "icon": "\ud83c\udf63",
         "desc": "Grilled chicken and salmon over seasoned rice.",
         "cuisine": "Japanese",
         "form": "rice",
@@ -351,7 +443,14 @@
         "courtName": "The Deck",
         "walk": 5,
         "stall": "Japanese Food",
-        "cat": "Donburi"
+        "cat": "Donburi",
+        "ing": [
+         "grilled chicken thigh",
+         "seared salmon",
+         "seasoned rice",
+         "nori",
+         "Japanese mayo"
+        ]
        }
       ]
      }
@@ -368,7 +467,7 @@
         "name": "Hainanese Chicken Rice",
         "price": 2.8,
         "prep": 6,
-        "icon": "🍗",
+        "icon": "\ud83c\udf57",
         "desc": "Poached chicken, fragrant rice, chilli on the side.",
         "cuisine": "Chinese",
         "form": "rice",
@@ -397,7 +496,14 @@
         "courtName": "The Deck",
         "walk": 5,
         "stall": "Sin Kee Chicken Rice",
-        "cat": "Rice plates"
+        "cat": "Rice plates",
+        "ing": [
+         "poached chicken",
+         "chicken-fat rice",
+         "cucumber",
+         "dark soy",
+         "ginger and chilli sauce"
+        ]
        }
       ]
      }
@@ -414,7 +520,7 @@
         "name": "Mala Xiang Guo (set)",
         "price": 7,
         "prep": 12,
-        "icon": "🌶️",
+        "icon": "\ud83c\udf36\ufe0f",
         "desc": "Dry-wok stir fry, pick your ingredients and heat.",
         "cuisine": "Chinese",
         "form": "rice",
@@ -441,7 +547,32 @@
         "courtName": "The Deck",
         "walk": 5,
         "stall": "Liang Ban Kung Fu",
-        "cat": "Mala"
+        "cat": "Mala",
+        "ing": [
+         "your chosen ingredients",
+         "mala spice blend",
+         "garlic",
+         "dried chilli",
+         "Sichuan peppercorn"
+        ],
+        "opts": {
+         "label": "Pick your ingredients",
+         "pick": 6,
+         "choices": [
+          "Lotus root",
+          "Cauliflower",
+          "Lettuce",
+          "Enoki mushroom",
+          "Luncheon meat",
+          "Sliced pork",
+          "Chicken slices",
+          "Prawns",
+          "Beancurd skin",
+          "Wide noodles",
+          "Quail egg",
+          "Baby corn"
+         ]
+        }
        }
       ]
      }
@@ -452,7 +583,7 @@
  {
   "id": "frontier",
   "name": "Frontier",
-  "loc": "Science · S16",
+  "loc": "Science \u00b7 S16",
   "walk": 8,
   "live": true,
   "stalls": [
@@ -467,7 +598,7 @@
         "name": "Ayam Penyet Set",
         "price": 5.5,
         "prep": 11,
-        "icon": "🍗",
+        "icon": "\ud83c\udf57",
         "desc": "Smashed fried chicken, sambal, rice and greens.",
         "cuisine": "Indonesian",
         "form": "rice",
@@ -496,13 +627,20 @@
         "courtName": "Frontier",
         "walk": 8,
         "stall": "Uncle Penyet",
-        "cat": "Sets"
+        "cat": "Sets",
+        "ing": [
+         "smashed fried chicken",
+         "sambal",
+         "rice",
+         "fried tempeh",
+         "cucumber and lettuce"
+        ]
        },
        {
         "name": "Steamed Chicken Set",
         "price": 4.8,
         "prep": 9,
-        "icon": "🍚",
+        "icon": "\ud83c\udf5a",
         "desc": "Steamed chicken with rice and vegetables.",
         "cuisine": "Indonesian",
         "form": "rice",
@@ -531,7 +669,14 @@
         "courtName": "Frontier",
         "walk": 8,
         "stall": "Uncle Penyet",
-        "cat": "Sets"
+        "cat": "Sets",
+        "ing": [
+         "steamed chicken",
+         "rice",
+         "blanched vegetables",
+         "light soy",
+         "ginger"
+        ]
        }
       ]
      }
@@ -548,7 +693,7 @@
         "name": "Salted Egg Chicken Rice",
         "price": 4.5,
         "prep": 10,
-        "icon": "🍛",
+        "icon": "\ud83c\udf5b",
         "desc": "Wok-fried chicken in salted egg sauce over rice.",
         "cuisine": "Chinese",
         "form": "rice",
@@ -578,7 +723,14 @@
         "courtName": "Frontier",
         "walk": 8,
         "stall": "Asia Wok",
-        "cat": "Rice"
+        "cat": "Rice",
+        "ing": [
+         "fried chicken",
+         "salted egg yolk sauce",
+         "curry leaf",
+         "chilli padi",
+         "rice"
+        ]
        }
       ]
      },
@@ -589,7 +741,7 @@
         "name": "Fried Beef Hor Fun",
         "price": 5,
         "prep": 11,
-        "icon": "🍜",
+        "icon": "\ud83c\udf5c",
         "desc": "Flat rice noodles wok-fried with beef and gravy.",
         "cuisine": "Chinese",
         "form": "noodles",
@@ -617,7 +769,14 @@
         "courtName": "Frontier",
         "walk": 8,
         "stall": "Asia Wok",
-        "cat": "Fried noodles"
+        "cat": "Fried noodles",
+        "ing": [
+         "flat rice noodles",
+         "sliced beef",
+         "egg gravy",
+         "kai lan",
+         "black bean"
+        ]
        }
       ]
      }
@@ -634,7 +793,7 @@
         "name": "Wanton Noodles",
         "price": 2.3,
         "prep": 6,
-        "icon": "🍜",
+        "icon": "\ud83c\udf5c",
         "desc": "Springy egg noodles, char siew, wanton on the side.",
         "cuisine": "Chinese",
         "form": "noodles",
@@ -663,13 +822,20 @@
         "courtName": "Frontier",
         "walk": 8,
         "stall": "Chinese Noodles",
-        "cat": "Noodles"
+        "cat": "Noodles",
+        "ing": [
+         "springy egg noodles",
+         "char siew",
+         "pork wanton",
+         "leafy greens",
+         "chilli and dark sauce"
+        ]
        },
        {
         "name": "Dumpling Noodle Soup",
         "price": 2.8,
         "prep": 7,
-        "icon": "🥟",
+        "icon": "\ud83e\udd5f",
         "desc": "Noodles and dumplings in clear soup.",
         "cuisine": "Chinese",
         "form": "noodles",
@@ -697,7 +863,13 @@
         "courtName": "Frontier",
         "walk": 8,
         "stall": "Chinese Noodles",
-        "cat": "Noodles"
+        "cat": "Noodles",
+        "ing": [
+         "egg noodles",
+         "pork dumplings",
+         "clear broth",
+         "leafy greens"
+        ]
        }
       ]
      }
@@ -714,7 +886,7 @@
         "name": "Rice + 3 Dishes",
         "price": 3.5,
         "prep": 4,
-        "icon": "🍱",
+        "icon": "\ud83c\udf71",
         "desc": "Point at what you want. Vegetarian picks available.",
         "cuisine": "Chinese",
         "form": "rice",
@@ -743,7 +915,28 @@
         "courtName": "Frontier",
         "walk": 8,
         "stall": "Mixed Vegetable Rice",
-        "cat": "Economic rice"
+        "cat": "Economic rice",
+        "ing": [
+         "steamed white rice",
+         "your three chosen dishes",
+         "gravy on request"
+        ],
+        "opts": {
+         "label": "Pick 3 dishes",
+         "pick": 3,
+         "choices": [
+          "Braised egg",
+          "Sweet & sour pork",
+          "Curry chicken",
+          "Stir-fried cabbage",
+          "Long bean with egg",
+          "Mapo tofu",
+          "Fried fish",
+          "Sambal brinjal",
+          "Ngoh hiang",
+          "Stir-fried beansprouts"
+         ]
+        }
        }
       ]
      }
@@ -754,7 +947,7 @@
  {
   "id": "techno",
   "name": "Techno Edge",
-  "loc": "CDE · E2",
+  "loc": "CDE \u00b7 E2",
   "walk": 11,
   "live": true,
   "stalls": [
@@ -769,7 +962,7 @@
         "name": "Fried Chicken Tama",
         "price": 4,
         "prep": 9,
-        "icon": "🍗",
+        "icon": "\ud83c\udf57",
         "desc": "Japanese fried chicken with egg over rice.",
         "cuisine": "Japanese",
         "form": "rice",
@@ -798,7 +991,14 @@
         "courtName": "Techno Edge",
         "walk": 11,
         "stall": "Kaneda Japanese Cuisine",
-        "cat": "Fried"
+        "cat": "Fried",
+        "ing": [
+         "Japanese fried chicken",
+         "egg",
+         "onion",
+         "rice",
+         "sweet soy"
+        ]
        }
       ]
      }
@@ -815,7 +1015,7 @@
         "name": "Fishball Minced Meat Noodles",
         "price": 2.8,
         "prep": 6,
-        "icon": "🍜",
+        "icon": "\ud83c\udf5c",
         "desc": "Dry or soup, with fishballs and minced pork.",
         "cuisine": "Chinese",
         "form": "noodles",
@@ -844,7 +1044,14 @@
         "courtName": "Techno Edge",
         "walk": 11,
         "stall": "Hougang Fishball Noodles",
-        "cat": "Noodles"
+        "cat": "Noodles",
+        "ing": [
+         "fishballs",
+         "minced pork",
+         "mee pok or mee kia",
+         "fried lard",
+         "chilli and vinegar"
+        ]
        }
       ]
      }
@@ -861,7 +1068,7 @@
         "name": "Black Pepper Chicken Chop",
         "price": 3.2,
         "prep": 10,
-        "icon": "🍽️",
+        "icon": "\ud83c\udf7d\ufe0f",
         "desc": "Grilled chicken chop, fries and coleslaw.",
         "cuisine": "Western",
         "form": "rice",
@@ -890,7 +1097,14 @@
         "courtName": "Techno Edge",
         "walk": 11,
         "stall": "Western Food",
-        "cat": "Grills"
+        "cat": "Grills",
+        "ing": [
+         "grilled chicken chop",
+         "black pepper sauce",
+         "fries",
+         "coleslaw",
+         "baked beans"
+        ]
        }
       ]
      }
@@ -907,7 +1121,7 @@
         "name": "Ayam Panggang with Rice",
         "price": 3.5,
         "prep": 9,
-        "icon": "🔥",
+        "icon": "\ud83d\udd25",
         "desc": "Charcoal-grilled chicken with sambal and rice.",
         "cuisine": "Indonesian",
         "form": "rice",
@@ -936,7 +1150,14 @@
         "courtName": "Techno Edge",
         "walk": 11,
         "stall": "Indonesian Panggang",
-        "cat": "Grilled"
+        "cat": "Grilled",
+        "ing": [
+         "charcoal-grilled chicken",
+         "sambal",
+         "rice",
+         "cucumber",
+         "fried shallots"
+        ]
        }
       ]
      }
@@ -962,7 +1183,7 @@
         "name": "Mazesoba",
         "price": 5.8,
         "prep": 9,
-        "icon": "🍜",
+        "icon": "\ud83c\udf5c",
         "desc": "Brothless mixed noodles with minced meat and egg.",
         "cuisine": "Japanese",
         "form": "noodles",
@@ -991,13 +1212,21 @@
         "courtName": "Central Square",
         "walk": 7,
         "stall": "TempuRamen",
-        "cat": "Ramen & udon"
+        "cat": "Ramen & udon",
+        "ing": [
+         "thick brothless noodles",
+         "minced pork",
+         "egg yolk",
+         "spring onion",
+         "nori",
+         "garlic"
+        ]
        },
        {
         "name": "Fire Chicken Ramen",
         "price": 6.9,
         "prep": 11,
-        "icon": "🌶️",
+        "icon": "\ud83c\udf36\ufe0f",
         "desc": "Spicy chicken ramen in a rich broth.",
         "cuisine": "Japanese",
         "form": "noodles",
@@ -1026,13 +1255,21 @@
         "courtName": "Central Square",
         "walk": 7,
         "stall": "TempuRamen",
-        "cat": "Ramen & udon"
+        "cat": "Ramen & udon",
+        "ing": [
+         "ramen noodles",
+         "spicy chicken broth",
+         "grilled chicken",
+         "soft egg",
+         "chilli oil",
+         "spring onion"
+        ]
        },
        {
         "name": "Creamy Mentaiko Udon",
         "price": 7.5,
         "prep": 10,
-        "icon": "🍝",
+        "icon": "\ud83c\udf5d",
         "desc": "Thick udon in creamy cod roe sauce.",
         "cuisine": "Japanese",
         "form": "noodles",
@@ -1061,7 +1298,14 @@
         "courtName": "Central Square",
         "walk": 7,
         "stall": "TempuRamen",
-        "cat": "Ramen & udon"
+        "cat": "Ramen & udon",
+        "ing": [
+         "thick udon",
+         "cod roe cream sauce",
+         "butter",
+         "nori",
+         "spring onion"
+        ]
        }
       ]
      }
@@ -1087,7 +1331,7 @@
         "name": "Bibimbap",
         "price": 6.6,
         "prep": 9,
-        "icon": "🥗",
+        "icon": "\ud83e\udd57",
         "desc": "Rice with seasoned vegetables, egg and gochujang.",
         "cuisine": "Korean",
         "form": "rice",
@@ -1117,7 +1361,16 @@
         "courtName": "UTown Food Clique",
         "walk": 14,
         "stall": "Hwang's Korean",
-        "cat": "Rice bowls"
+        "cat": "Rice bowls",
+        "ing": [
+         "rice",
+         "seasoned spinach",
+         "carrot",
+         "bean sprouts",
+         "courgette",
+         "fried egg",
+         "gochujang"
+        ]
        }
       ]
      },
@@ -1128,7 +1381,7 @@
         "name": "Samgyetang",
         "price": 8.3,
         "prep": 14,
-        "icon": "🍲",
+        "icon": "\ud83c\udf72",
         "desc": "Whole young chicken in ginseng broth.",
         "cuisine": "Korean",
         "form": "rice",
@@ -1157,7 +1410,15 @@
         "courtName": "UTown Food Clique",
         "walk": 14,
         "stall": "Hwang's Korean",
-        "cat": "Soups"
+        "cat": "Soups",
+        "ing": [
+         "whole young chicken",
+         "ginseng",
+         "glutinous rice",
+         "jujube",
+         "garlic",
+         "spring onion"
+        ]
        }
       ]
      },
@@ -1168,7 +1429,7 @@
         "name": "Tteokbokki",
         "price": 4,
         "prep": 7,
-        "icon": "🌶️",
+        "icon": "\ud83c\udf36\ufe0f",
         "desc": "Chewy rice cakes in sweet-spicy sauce.",
         "cuisine": "Korean",
         "form": "noodles",
@@ -1198,7 +1459,14 @@
         "courtName": "UTown Food Clique",
         "walk": 14,
         "stall": "Hwang's Korean",
-        "cat": "Snacks"
+        "cat": "Snacks",
+        "ing": [
+         "rice cakes",
+         "gochujang sauce",
+         "fish cake",
+         "spring onion",
+         "sesame"
+        ]
        }
       ]
      }
@@ -1215,7 +1483,7 @@
         "name": "Chargrill Chicken + 2 Sides",
         "price": 6.9,
         "prep": 12,
-        "icon": "🍗",
+        "icon": "\ud83c\udf57",
         "desc": "Grilled chicken breast with two sides.",
         "cuisine": "Western",
         "form": "rice",
@@ -1244,7 +1512,24 @@
         "courtName": "UTown Food Clique",
         "walk": 14,
         "stall": "Astons Express",
-        "cat": "Grills"
+        "cat": "Grills",
+        "ing": [
+         "chargrilled chicken breast",
+         "your two chosen sides",
+         "house sauce"
+        ],
+        "opts": {
+         "label": "Pick 2 sides",
+         "pick": 2,
+         "choices": [
+          "Coleslaw",
+          "Fries",
+          "Baked beans",
+          "Garden salad",
+          "Mashed potato",
+          "Buttered corn"
+         ]
+        }
        }
       ]
      }
@@ -1261,7 +1546,7 @@
         "name": "Mushroom Prata",
         "price": 3.3,
         "prep": 7,
-        "icon": "🥞",
+        "icon": "\ud83e\udd5e",
         "desc": "Crisp flatbread with mushrooms and curry.",
         "cuisine": "Indian",
         "form": "bread",
@@ -1292,7 +1577,13 @@
         "courtName": "UTown Food Clique",
         "walk": 14,
         "stall": "Indian Food",
-        "cat": "Prata"
+        "cat": "Prata",
+        "ing": [
+         "flaky flatbread",
+         "sauteed mushroom",
+         "curry gravy",
+         "sugar on request"
+        ]
        }
       ]
      }
@@ -1309,7 +1600,7 @@
         "name": "Beef Udon",
         "price": 8.9,
         "prep": 10,
-        "icon": "🍜",
+        "icon": "\ud83c\udf5c",
         "desc": "Thick udon in dashi broth with sliced beef.",
         "cuisine": "Japanese",
         "form": "noodles",
@@ -1338,7 +1629,14 @@
         "courtName": "UTown Food Clique",
         "walk": 14,
         "stall": "Udon Don Bar",
-        "cat": "Udon"
+        "cat": "Udon",
+        "ing": [
+         "thick udon",
+         "dashi broth",
+         "sliced beef",
+         "spring onion",
+         "narutomaki"
+        ]
        }
       ]
      },
@@ -1349,7 +1647,7 @@
         "name": "Salted Egg Chicken Donburi",
         "price": 9.5,
         "prep": 11,
-        "icon": "🍱",
+        "icon": "\ud83c\udf71",
         "desc": "Fried chicken in salted egg sauce over rice.",
         "cuisine": "Japanese",
         "form": "rice",
@@ -1379,7 +1677,14 @@
         "courtName": "UTown Food Clique",
         "walk": 14,
         "stall": "Udon Don Bar",
-        "cat": "Donburi"
+        "cat": "Donburi",
+        "ing": [
+         "fried chicken",
+         "salted egg sauce",
+         "rice",
+         "curry leaf",
+         "chilli"
+        ]
        }
       ]
      }
@@ -1405,7 +1710,7 @@
         "name": "Mala Collagen Soup Base",
         "price": 2.5,
         "prep": 10,
-        "icon": "🍲",
+        "icon": "\ud83c\udf72",
         "desc": "Soup base, then pick ingredients by weight.",
         "cuisine": "Chinese",
         "form": "rice",
@@ -1432,7 +1737,32 @@
         "courtName": "PGP Canteen",
         "walk": 16,
         "stall": "A Hot Hideout",
-        "cat": "Mala"
+        "cat": "Mala",
+        "ing": [
+         "collagen soup base",
+         "mala spice",
+         "your chosen ingredients",
+         "garlic",
+         "coriander"
+        ],
+        "opts": {
+         "label": "Pick your ingredients",
+         "pick": 6,
+         "choices": [
+          "Lotus root",
+          "Cauliflower",
+          "Lettuce",
+          "Enoki mushroom",
+          "Luncheon meat",
+          "Sliced pork",
+          "Chicken slices",
+          "Prawns",
+          "Beancurd skin",
+          "Wide noodles",
+          "Quail egg",
+          "Baby corn"
+         ]
+        }
        }
       ]
      }
@@ -1449,7 +1779,7 @@
         "name": "Nutty Truck Acai Bowl",
         "price": 5.4,
         "prep": 4,
-        "icon": "🫐",
+        "icon": "\ud83e\uded0",
         "desc": "Acai with granola, banana and peanut butter.",
         "cuisine": "Western",
         "form": "drink",
@@ -1480,7 +1810,14 @@
         "courtName": "PGP Canteen",
         "walk": 16,
         "stall": "The Acai Truck",
-        "cat": "Bowls"
+        "cat": "Bowls",
+        "ing": [
+         "acai",
+         "granola",
+         "banana",
+         "peanut butter",
+         "honey"
+        ]
        }
       ]
      }
@@ -1497,7 +1834,7 @@
         "name": "Taiwan Popcorn Chicken Rice Box",
         "price": 4.5,
         "prep": 8,
-        "icon": "🍱",
+        "icon": "\ud83c\udf71",
         "desc": "Crisp popcorn chicken with rice and pickles.",
         "cuisine": "Taiwanese",
         "form": "rice",
@@ -1525,7 +1862,14 @@
         "courtName": "PGP Canteen",
         "walk": 16,
         "stall": "Tai Feng Wei",
-        "cat": "Rice boxes"
+        "cat": "Rice boxes",
+        "ing": [
+         "popcorn chicken",
+         "five-spice",
+         "basil",
+         "rice",
+         "pickled vegetables"
+        ]
        }
       ]
      }

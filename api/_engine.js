@@ -106,10 +106,66 @@ function because(d, n) {
   return b.slice(0, 4).join(' · ');
 }
 
+
+/* ── "tell me about that one" ──────────────────────────────────────────────
+   Recommending is only half a conversation. When someone asks what's IN a dish,
+   or what they can pick, answering that question is the whole job — and pitching
+   a different dish instead is the single most annoying thing an agent can do. */
+const DETAIL_RE = /(what'?s in|what is in|whats in|ingredient|what can i (pick|choose|select)|what.*options|tell me (more|about)|more about|more info|describe|how does .* work|what comes with|inside)/i;
+
+function isDetailQuestion(text){ return DETAIL_RE.test(String(text || '')); }
+
+/* Which dish do they mean? Their words first, then whatever we just showed them. */
+function findFocus(text, lastShown = []) {
+  const q = String(text || '').toLowerCase();
+  const all = allDishes();
+
+  const named = all.find(d => q.includes(d.name.toLowerCase()));
+  if (named) return named;
+
+  const loose = all.find(d => {
+    const words = d.name.toLowerCase().replace(/[()]/g, '').split(/\s+/).filter(w => w.length > 3);
+    return words.length && words.every(w => q.includes(w));
+  });
+  if (loose) return loose;
+
+  /* nicknames people actually use */
+  const NICK = [[/yong ?tau ?foo|ytf|yong tow foo|young tofu/, 'Yong Tau Foo Soup'],
+                [/\bmala\b/, 'Mala'], [/chicken rice/, 'Hainanese'], [/cai ?fan|economy rice|mixed rice/, 'Rice + 3'],
+                [/ban ?mian/, 'Ban Mian'], [/katsu/, 'Katsu'], [/ramen/, 'Ramen'], [/prata/, 'Prata']];
+  for (const [re, frag] of NICK){
+    if (re.test(q)){
+      const hit = all.find(d => d.name.includes(frag) && (!lastShown.length || lastShown.includes(d.id)))
+               || all.find(d => d.name.includes(frag));
+      if (hit) return hit;
+    }
+  }
+
+  /* "it" / "that one" — only unambiguous if we just showed exactly one */
+  if (/\b(it|that one|this one|that|the first one)\b/.test(q) && lastShown.length === 1) return byId(lastShown[0]);
+  return null;
+}
+
+function describe(d){
+  const bits = [];
+  bits.push(`<b>${d.name}</b> — ${money(d.price)} at ${d.stall}, ${d.courtName}. ${d.desc}`);
+  if (d.ing && d.ing.length) bits.push(`It comes with ${d.ing.slice(0, -1).join(', ')} and ${d.ing[d.ing.length - 1]}.`);
+  const flags = [];
+  if (d.diet.includes('vegan')) flags.push('vegan');
+  else if (d.diet.includes('vegetarian')) flags.push('vegetarian');
+  if (d.diet.includes('halal')) flags.push('halal');
+  if (d.has.length) flags.push(`contains ${d.has.join(', ')}`);
+  if (flags.length) bits.push(flags.join(' · ') + '.');
+  bits.push(`About ${d.prep} minutes, ${d.walk} minutes' walk away.`);
+  if (d.opts) bits.push(`${d.opts.label} — tap the ones you want below.`);
+  return bits.join(' ');
+}
+
 function rank(needs) {
   return allDishes().map(d => ({ d, s: score(d, needs) }))
     .filter(x => x.s >= 0)
     .sort((a, b) => b.s - a.s || a.d.price - b.d.price);
 }
 
-module.exports = { COURTS, allDishes, byId, money, parse, score, because, rank };
+module.exports = { COURTS, allDishes, byId, money, parse, score, because, rank,
+                   isDetailQuestion, findFocus, describe };
