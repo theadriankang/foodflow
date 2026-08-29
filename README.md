@@ -123,11 +123,77 @@ Most merchants in this category have no website, so the integration story is fou
 | Nothing but a stall | Hosted page + QR code on the counter |
 | A Wix / Shopify site | One-click app in that platform's marketplace |
 | A GrabFood listing | Import the menu they already keep current |
+| Only a phone | **Photograph the menu board into a Telegram bot** — implemented, see below |
 | A POS system | API + webhooks, live prices and stock |
 
 All four resolve to the same published agent.
 
 ---
+
+
+## Merchant onboarding by Telegram
+
+The web console expects a spreadsheet. A hawker standing at their stall has a phone and a menu board, so the real ingest path is a photo in a chat they already have open.
+
+**The flow:** merchant messages the bot → sends a photo of the menu board → the agent reads it and replies with a tree → they correct anything by typing → one tap on **Publish** → it is live in the storefront and the food agent can recommend from it immediately. No website, no app, no forms.
+
+The tree they see is deliberately shallow, because Telegram is a narrow column on a phone:
+
+```
+🏫 Ah Seng Coffee Shop
+Blk 505 Jurong West · 6 min walk
+
+🏪 Ah Seng Noodles
+   Noodles
+   • Wanton Mee — $4.00
+   • Dumpling Soup — $4.50
+
+🏪 Nasi Padang
+   • Rice with 2 dishes — $4.50
+   • Teh Tarik — —  ⚠️ no price
+
+2 stalls · 5 dishes · 1 missing a price
+```
+
+Categories only appear if the board actually printed them. If the menu is just a list, the dishes sit straight under the stall — inventing a taxonomy that isn't on the board would be making things up. Missing prices are flagged rather than guessed, and the merchant fixes one by typing `teh tarik 1.60`.
+
+### What the model is and isn't allowed to conclude
+
+Reading a menu photo means guessing, so the guesses are split by what happens when they're wrong:
+
+| Inferred generously | Never inferred |
+|---|---|
+| **Contains** — chicken, pork, gluten, dairy, nuts… A false positive only hides the dish from someone avoiding that ingredient, which is the safe direction to be wrong in. | **Halal** — a certification, not something readable off a photo. |
+| **Attributes** — noodles vs rice, soupy vs fried, spicy, prep time. Wrong just means a slightly worse recommendation. | **Vegetarian** — calling a dish vegetarian when it isn't puts food in front of someone who didn't want it. |
+| **Calories and protein** — estimated and always shown with a `~`. | **Prices** — flagged as missing rather than invented. |
+
+Dietary flags stay empty until the merchant sets them. The bot says so when it publishes.
+
+### Setting it up
+
+1. Message [@BotFather](https://t.me/BotFather) → `/newbot` → copy the token.
+2. Add these in Vercel → Settings → Environment Variables, then redeploy:
+
+```
+TELEGRAM_BOT_TOKEN=123456:ABC...
+TELEGRAM_WEBHOOK_SECRET=any-random-string
+OPENAI_API_KEY=sk-...            # photo reading needs the model
+```
+
+3. Point Telegram at your deployment (once):
+
+```bash
+curl "https://api.telegram.org/bot<TOKEN>/setWebhook?url=https://<your-app>.vercel.app/api/telegram&secret_token=<SECRET>"
+```
+
+4. Message your bot `/start` and send a photo of any menu.
+
+`GET /api/health` reports whether the bot token and the model are configured.
+
+### Where published menus live
+
+Vercel's filesystem is read-only at runtime, so `api/catalog.json` is the seed catalog and nothing more. Menus published from Telegram go to a key-value store. Set `KV_REST_API_URL` and `KV_REST_API_TOKEN` (Vercel KV or Upstash, both have a free tier) and they persist. Without them it falls back to memory on the running instance — fine for a demo, gone on a cold start. `/api/health` tells you which mode is active, so nobody has to guess.
+
 
 ## Trust, consent and payment
 

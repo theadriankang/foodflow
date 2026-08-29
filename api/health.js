@@ -2,6 +2,7 @@
    Deliberately does NOT return the key, only whether one is present and usable.
    Add ?probe=1 to make one real (tiny) call to the model and report what came back. */
 
+const store = require('./_store.js');
 const KEY   = process.env.OPENAI_API_KEY;
 const MODEL = process.env.OPENAI_MODEL || 'gpt-4o-mini';
 
@@ -12,6 +13,8 @@ module.exports = async (req, res) => {
     model: KEY ? MODEL : null,
     keyConfigured: Boolean(KEY),
     keyLooksValid: KEY ? /^sk-[A-Za-z0-9_-]{20,}$/.test(KEY) : false,
+    telegramBot: Boolean(process.env.TELEGRAM_BOT_TOKEN),
+    catalogStore: store.durable ? 'durable (KV)' : 'in-memory (published menus reset on cold start)',
     note: KEY
       ? 'A key is set. Add ?probe=1 to this URL to make one real call and confirm it works.'
       : 'No key set — the agent is running on the local rules engine. The demo works fully either way.'

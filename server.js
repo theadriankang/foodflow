@@ -13,7 +13,8 @@ const TYPES = { '.html':'text/html', '.js':'text/javascript', '.css':'text/css',
 const routes = {
   '/api/catalog': require('./api/catalog.js'),
   '/api/agent':   require('./api/agent.js'),
-  '/api/health':  require('./api/health.js')
+  '/api/health':  require('./api/health.js'),
+  '/api/telegram': require('./api/telegram.js')
 };
 
 function shim(res) {
