@@ -81,7 +81,7 @@ function marksFor(d){
   if (n.court)   put(`${d.walk} min walk`, true);
   if (n.budget)  put(money(d.price), d.price <= n.budget.v);
 
-  return m.filter(x => x.hot).slice(0, 4);   /* only what actually matches them */
+  return m.filter(x => x.hot).slice(0, 3);   /* only what actually matches them */
 }
 const markChips = m => m.map(x => `<span class="at hot">${x.label}</span>`).join('');
 
@@ -98,7 +98,7 @@ function cardHTML(d, grouped){
         const m = marksFor(d);
         const said = m.map(x => x.label.toLowerCase());
         const rest = chipsFor(d).filter(([t]) => !said.includes(t.toLowerCase()))
-                                .slice(0, Math.max(0, 3 - m.length));
+                                .slice(0, Math.max(0, 4 - m.length));
         return markChips(m) + rest.map(([t,g]) => `<span class="at${g?' diet':''}">${t}</span>`).join('');
       })()}</div>
     <div class="card-foot">
@@ -1071,9 +1071,46 @@ collBody.addEventListener('click', e => { if (!e.target.closest('[data-a="done"]
     : `Order <b>${o.id}</b> is paid. ${o.groups.map(k=>`<b>${k.code}</b> at ${k.stall}`).join(' and ')} — I'll keep tracking it. Anything else?`);
   chipRow(['Something to drink','Same again tomorrow']); });
 
+
+/* ══════════ the page makes room, and you can resize the panel ══════════ */
+const MIN_W = 340, MAX_W = 620;
+function setWidgetWidth(px){
+  const w = Math.max(MIN_W, Math.min(MAX_W, Math.round(px)));
+  document.documentElement.style.setProperty('--wgt-w', w + 'px');
+  if (state.view === 'store') drawGrid();      /* columns reflow to the new space */
+}
+(function makeResizable(){
+  const grip = document.createElement('div');
+  grip.className = 'wgt-grip';
+  grip.setAttribute('title', 'Drag to resize');
+  wgt.appendChild(grip);
+  let startX = 0, startW = 0, dragging = false;
+  const move = e => {
+    if (!dragging) return;
+    setWidgetWidth(startW + (startX - e.clientX));
+  };
+  const up = () => {
+    if (!dragging) return;
+    dragging = false;
+    wgt.classList.remove('resizing');
+    document.body.classList.remove('resizing-wgt');
+    removeEventListener('pointermove', move); removeEventListener('pointerup', up);
+  };
+  grip.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    dragging = true; startX = e.clientX; startW = wgt.offsetWidth;
+    wgt.classList.add('resizing'); document.body.classList.add('resizing-wgt');
+    addEventListener('pointermove', move); addEventListener('pointerup', up);
+  });
+  /* double-click the edge to snap between comfortable and wide */
+  grip.addEventListener('dblclick', () => setWidgetWidth(wgt.offsetWidth > 470 ? 396 : 540));
+})();
+
 /* open/close */
 function openW(seed){
   wgt.hidden=false; launch.hidden=true; wgt.classList.add('opening');
+  document.body.classList.add('wgt-open');
+  if (state.view === 'store') requestAnimationFrame(drawGrid);
   setTimeout(()=>wgt.classList.remove('opening'),220);
   if (!log.children.length){
     bubble('ai', `Hi — I'm the FoodFlow agent for NUS. I know <b>${allDishes().length}</b> dishes across <b>${COURTS.filter(c=>c.live).length}</b> canteens. Tell me what you're craving and where you're headed; I'll find it, pay for it, and tell you where to collect.`);
@@ -1083,7 +1120,10 @@ function openW(seed){
   if (seed) setTimeout(()=>send(seed),260); else setTimeout(()=>inp.focus(),240);
 }
 launch.addEventListener('click', () => openW());
-closeW.addEventListener('click', () => { wgt.hidden=true; launch.hidden=false; });
+closeW.addEventListener('click', () => {
+  wgt.hidden=true; launch.hidden=false; document.body.classList.remove('wgt-open');
+  if (state.view === 'store') requestAnimationFrame(drawGrid);
+});
 cartBtn.addEventListener('click', () => { if (!state.cart.length) return toast('Nothing decided yet');
   openW(); setTimeout(openAuth,300); });
 askBar.addEventListener('click', () => openW());
