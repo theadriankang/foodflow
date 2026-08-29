@@ -461,3 +461,21 @@ input,textarea,select{font:inherit;color:inherit}
 .opt-add:disabled{background:var(--sunk);color:var(--ink-3);cursor:default}
 
 .picks{display:block;font-size:11.5px;color:var(--ink-3);margin-top:2px;line-height:1.4}
+
+/* agent-marked choices */
+.hl-note{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--amber);
+  font-family:"JetBrains Mono",monospace;letter-spacing:.01em}
+.hl-dot{width:6px;height:6px;border-radius:50%;background:var(--amber);flex:none}
+.opt.hl{border-color:var(--amber);color:var(--ink);background:var(--amber-soft)}
+.opt.hl::after{content:"";display:inline-block;width:5px;height:5px;border-radius:50%;
+  background:var(--amber);margin-left:6px;vertical-align:middle}
+.opt.hl.on{background:var(--green-soft);border-color:var(--green);color:var(--green-ink)}
+.opt.hl.on::after{background:var(--green)}
+
+/* what the agent has marked as matching the customer */
+.at.hot{background:var(--amber-soft);color:var(--amber);font-weight:550}
+.at.hot::before{content:"";display:inline-block;width:4px;height:4px;border-radius:50%;
+  background:var(--amber);margin-right:5px;vertical-align:middle}
+.rmarks{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px}
+.rmarks .at{font-size:10.5px;padding:2px 7px}
+.est-note{font-size:10.5px;color:var(--ink-3);font-style:italic;align-self:center}

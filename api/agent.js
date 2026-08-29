@@ -78,14 +78,18 @@ module.exports = async (req, res) => {
   const needs = E.parse(prompt, prior);
 
   /* A question about a specific dish is answered from the catalog, not guessed at. */
-  const focus = E.isDetailQuestion(prompt) ? E.findFocus(prompt, lastShown) : null;
+  const asksDetail = E.isDetailQuestion(prompt) || E.isOptionQuestion(prompt);
+  const focus = asksDetail ? E.findFocus(prompt, lastShown) : null;
+  /* which ingredients to mark is a catalog fact, decided here — never by the model */
+  const highlight = focus ? E.highlightFor(focus, prompt) : null;
   const wantsCheckout = /authoris|authorize|check ?out|\bpay\b|place (the|my) order/i.test(prompt);
   const wantsDelivery = /deliver|send it to me|don'?t want to walk|too far to walk/i.test(prompt);
 
   if (focus && !KEY) {
     return res.status(200).json({
-      say: E.describe(focus), itemIds: [focus.id], why: [], chips: null,
-      focusId: focus.id, needs, engine: 'rules'
+      say: highlight ? E.sayHighlight(focus, highlight) : E.describe(focus),
+      itemIds: [focus.id], why: [], chips: null,
+      focusId: focus.id, highlight, needs, engine: 'rules'
     });
   }
 
@@ -99,7 +103,8 @@ module.exports = async (req, res) => {
     id: focus.id, name: focus.name, price: focus.price, stall: focus.stall, canteen: focus.courtName,
     description: focus.desc, ingredients: focus.ing || [], contains: focus.has, dietary: focus.diet,
     prepMin: focus.prep, walkMin: focus.walk,
-    youCanPick: focus.opts ? { label: focus.opts.label, howMany: focus.opts.pick, choices: focus.opts.choices } : null
+    youCanPick: focus.opts ? { label: focus.opts.label, howMany: focus.opts.pick, choices: focus.opts.choices } : null,
+    weAlreadyMarkedForThem: highlight ? { theseAre: highlight.note, choices: highlight.choices } : null
   } : null;
 
   const candidates = E.rank(needs).slice(0, 12).map(({ d }) => ({
@@ -123,7 +128,8 @@ module.exports = async (req, res) => {
             `WHAT WE KNOW SO FAR: ${JSON.stringify(Object.fromEntries(Object.entries(needs).map(([k, v]) => [k, v.label])))}\n\n` +
             `CART: ${cart.length ? JSON.stringify(cart) : 'empty'}\n\n` +
             (focusBlock
-              ? `THE CUSTOMER IS ASKING ABOUT THIS DISH — answer about it, do not suggest others:\n${JSON.stringify(focusBlock)}\n\n`
+              ? `THE CUSTOMER IS ASKING ABOUT THIS DISH — answer about it, do not suggest others:\n${JSON.stringify(focusBlock)}\n\n` +
+                (highlight ? `We have ALREADY highlighted the "${highlight.note}" choices in their picker. Name them naturally in one sentence and tell them to tap the ones they want. Do not list anything else, do not recommend another dish.\n\n` : '')
               : '') +
             `CANDIDATES (recommend only from these): ${JSON.stringify(candidates)}` }
         ]
@@ -144,6 +150,7 @@ module.exports = async (req, res) => {
     return res.status(200).json({
       say:    String(parsed.say || 'Here are the closest matches.').slice(0, 600),
       focusId,
+      highlight,
       itemIds: focusId && !itemIds.length ? [focusId] : itemIds,
       why:    Array.isArray(parsed.why) ? parsed.why.slice(0, 3) : itemIds.map(id => E.because(E.byId(id), needs)),
       chips:  Array.isArray(parsed.chips) ? parsed.chips.slice(0, 3) : null,
@@ -155,8 +162,10 @@ module.exports = async (req, res) => {
     });
   } catch (err) {
     console.error('[agent] falling back to rules:', err.message);
-    if (focus) return res.status(200).json({ say: E.describe(focus), itemIds: [focus.id],
-      focusId: focus.id, why: [], chips: null, needs, engine: 'rules-fallback' });
+    if (focus) return res.status(200).json({
+      say: highlight ? E.sayHighlight(focus, highlight) : E.describe(focus),
+      itemIds: [focus.id], focusId: focus.id, highlight, why: [], chips: null,
+      needs, engine: 'rules-fallback' });
     const out = deterministic(prompt, needs, cart);
     return res.status(200).json({ ...out, engine: 'rules-fallback',
                                   go: wantsCheckout && cart.length > 0,

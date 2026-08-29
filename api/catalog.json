@@ -72,7 +72,10 @@
           "Long bean",
           "Button mushroom"
          ]
-        }
+        },
+        "pro": 22,
+        "kcal": 380,
+        "nutEst": true
        },
        {
         "name": "Laksa Yong Tau Foo",
@@ -133,7 +136,10 @@
           "Long bean",
           "Button mushroom"
          ]
-        }
+        },
+        "pro": 24,
+        "kcal": 620,
+        "nutEst": true
        }
       ]
      }
@@ -187,7 +193,10 @@
          "egg",
          "ikan bilis",
          "leafy greens"
-        ]
+        ],
+        "pro": 26,
+        "kcal": 520,
+        "nutEst": true
        },
        {
         "name": "Tomato Minced Meat Noodle",
@@ -228,7 +237,10 @@
          "minced pork",
          "tomato wedges",
          "spring onion"
-        ]
+        ],
+        "pro": 24,
+        "kcal": 480,
+        "nutEst": true
        },
        {
         "name": "Pork Ribs Noodle",
@@ -269,7 +281,10 @@
          "noodles",
          "fried garlic",
          "coriander"
-        ]
+        ],
+        "pro": 30,
+        "kcal": 560,
+        "nutEst": true
        }
       ]
      },
@@ -314,7 +329,10 @@
          "clear broth",
          "leafy greens",
          "sesame oil"
-        ]
+        ],
+        "pro": 20,
+        "kcal": 340,
+        "nutEst": true
        }
       ]
      }
@@ -367,7 +385,10 @@
          "onion",
          "egg",
          "tonkatsu sauce"
-        ]
+        ],
+        "pro": 34,
+        "kcal": 760,
+        "nutEst": true
        },
        {
         "name": "Chicken Katsu Curry Don",
@@ -409,7 +430,10 @@
          "rice",
          "carrot",
          "potato"
-        ]
+        ],
+        "pro": 36,
+        "kcal": 880,
+        "nutEst": true
        },
        {
         "name": "Chicken & Salmon Don",
@@ -450,7 +474,10 @@
          "seasoned rice",
          "nori",
          "Japanese mayo"
-        ]
+        ],
+        "pro": 38,
+        "kcal": 650,
+        "nutEst": true
        }
       ]
      }
@@ -503,7 +530,10 @@
          "cucumber",
          "dark soy",
          "ginger and chilli sauce"
-        ]
+        ],
+        "pro": 32,
+        "kcal": 600,
+        "nutEst": true
        }
       ]
      }
@@ -572,7 +602,10 @@
           "Quail egg",
           "Baby corn"
          ]
-        }
+        },
+        "pro": 28,
+        "kcal": 780,
+        "nutEst": true
        }
       ]
      }
@@ -634,7 +667,10 @@
          "rice",
          "fried tempeh",
          "cucumber and lettuce"
-        ]
+        ],
+        "pro": 36,
+        "kcal": 720,
+        "nutEst": true
        },
        {
         "name": "Steamed Chicken Set",
@@ -676,7 +712,10 @@
          "blanched vegetables",
          "light soy",
          "ginger"
-        ]
+        ],
+        "pro": 34,
+        "kcal": 450,
+        "nutEst": true
        }
       ]
      }
@@ -730,7 +769,10 @@
          "curry leaf",
          "chilli padi",
          "rice"
-        ]
+        ],
+        "pro": 30,
+        "kcal": 780,
+        "nutEst": true
        }
       ]
      },
@@ -776,7 +818,10 @@
          "egg gravy",
          "kai lan",
          "black bean"
-        ]
+        ],
+        "pro": 28,
+        "kcal": 700,
+        "nutEst": true
        }
       ]
      }
@@ -829,7 +874,10 @@
          "pork wanton",
          "leafy greens",
          "chilli and dark sauce"
-        ]
+        ],
+        "pro": 22,
+        "kcal": 460,
+        "nutEst": true
        },
        {
         "name": "Dumpling Noodle Soup",
@@ -869,7 +917,10 @@
          "pork dumplings",
          "clear broth",
          "leafy greens"
-        ]
+        ],
+        "pro": 21,
+        "kcal": 400,
+        "nutEst": true
        }
       ]
      }
@@ -936,7 +987,10 @@
           "Ngoh hiang",
           "Stir-fried beansprouts"
          ]
-        }
+        },
+        "pro": 24,
+        "kcal": 620,
+        "nutEst": true
        }
       ]
      }
@@ -998,7 +1052,10 @@
          "onion",
          "rice",
          "sweet soy"
-        ]
+        ],
+        "pro": 30,
+        "kcal": 680,
+        "nutEst": true
        }
       ]
      }
@@ -1051,7 +1108,10 @@
          "mee pok or mee kia",
          "fried lard",
          "chilli and vinegar"
-        ]
+        ],
+        "pro": 24,
+        "kcal": 420,
+        "nutEst": true
        }
       ]
      }
@@ -1104,7 +1164,10 @@
          "fries",
          "coleslaw",
          "baked beans"
-        ]
+        ],
+        "pro": 32,
+        "kcal": 640,
+        "nutEst": true
        }
       ]
      }
@@ -1157,7 +1220,10 @@
          "rice",
          "cucumber",
          "fried shallots"
-        ]
+        ],
+        "pro": 33,
+        "kcal": 580,
+        "nutEst": true
        }
       ]
      }
@@ -1220,7 +1286,10 @@
          "spring onion",
          "nori",
          "garlic"
-        ]
+        ],
+        "pro": 28,
+        "kcal": 700,
+        "nutEst": true
        },
        {
         "name": "Fire Chicken Ramen",
@@ -1263,7 +1332,10 @@
          "soft egg",
          "chilli oil",
          "spring onion"
-        ]
+        ],
+        "pro": 32,
+        "kcal": 720,
+        "nutEst": true
        },
        {
         "name": "Creamy Mentaiko Udon",
@@ -1305,7 +1377,10 @@
          "butter",
          "nori",
          "spring onion"
-        ]
+        ],
+        "pro": 20,
+        "kcal": 690,
+        "nutEst": true
        }
       ]
      }
@@ -1370,7 +1445,10 @@
          "courgette",
          "fried egg",
          "gochujang"
-        ]
+        ],
+        "pro": 18,
+        "kcal": 560,
+        "nutEst": true
        }
       ]
      },
@@ -1418,7 +1496,10 @@
          "jujube",
          "garlic",
          "spring onion"
-        ]
+        ],
+        "pro": 40,
+        "kcal": 520,
+        "nutEst": true
        }
       ]
      },
@@ -1466,7 +1547,10 @@
          "fish cake",
          "spring onion",
          "sesame"
-        ]
+        ],
+        "pro": 8,
+        "kcal": 420,
+        "nutEst": true
        }
       ]
      }
@@ -1529,7 +1613,10 @@
           "Mashed potato",
           "Buttered corn"
          ]
-        }
+        },
+        "pro": 42,
+        "kcal": 520,
+        "nutEst": true
        }
       ]
      }
@@ -1583,7 +1670,10 @@
          "sauteed mushroom",
          "curry gravy",
          "sugar on request"
-        ]
+        ],
+        "pro": 8,
+        "kcal": 380,
+        "nutEst": true
        }
       ]
      }
@@ -1636,7 +1726,10 @@
          "sliced beef",
          "spring onion",
          "narutomaki"
-        ]
+        ],
+        "pro": 26,
+        "kcal": 560,
+        "nutEst": true
        }
       ]
      },
@@ -1684,7 +1777,10 @@
          "rice",
          "curry leaf",
          "chilli"
-        ]
+        ],
+        "pro": 32,
+        "kcal": 860,
+        "nutEst": true
        }
       ]
      }
@@ -1762,7 +1858,10 @@
           "Quail egg",
           "Baby corn"
          ]
-        }
+        },
+        "pro": 26,
+        "kcal": 520,
+        "nutEst": true
        }
       ]
      }
@@ -1817,7 +1916,10 @@
          "banana",
          "peanut butter",
          "honey"
-        ]
+        ],
+        "pro": 9,
+        "kcal": 420,
+        "nutEst": true
        }
       ]
      }
@@ -1869,7 +1971,10 @@
          "basil",
          "rice",
          "pickled vegetables"
-        ]
+        ],
+        "pro": 28,
+        "kcal": 640,
+        "nutEst": true
        }
       ]
      }

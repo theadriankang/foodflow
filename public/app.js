@@ -54,6 +54,37 @@ function drawCourts(){
 function drawTabs(){
   tabs.innerHTML = catsFor().map(c => `<button class="tab" role="tab" aria-selected="${c===state.cat}" data-cat="${c}">${c}</button>`).join('');
 }
+
+/* ══════════ what the agent marks ══════════
+   Not a special case for the ingredient picker — this runs on every dish, everywhere
+   it appears, straight off the constraints the customer has actually given. Say you
+   came from the gym and every card starts showing its protein. Say "no pork" and the
+   ones that clear it say so. The UI answers the conversation without being asked. */
+function marksFor(d){
+  const n = state.needs, m = [];
+  const put = (label, hot) => m.push({ label, hot });
+
+  if (n.protein) put(`${d.nutEst ? '~' : ''}${d.pro}g protein`, d.pro >= 25);
+  if (n.weight && n.weight.v === 'light')  put(`${d.nutEst ? '~' : ''}${d.kcal} kcal`, d.heavy <= 2);
+  if (n.weight && n.weight.v === 'heavy')  put('filling', d.heavy >= 4);
+  if (n.tex) n.tex.v === 'dry' ? put('not soupy', !d.tex.includes('soupy'))
+                               : put(n.tex.v, d.tex.includes(n.tex.v));
+  if (n.spice) n.spice.v === 2 ? put('spicy', d.fl.spicy >= 2)
+                               : put('no chilli', d.fl.spicy === 0);
+  if (n.temp)    put(n.temp.v === 'cold' ? 'cold' : 'served hot', d.temp === n.temp.v);
+  if (n.form)    put(d.form === 'bread' ? 'in bread' : d.form, d.form === n.form.v);
+  if (n.cuisine) put(d.cuisine, d.cuisine === n.cuisine.v);
+  if (n.halal)   put('halal', d.diet.includes('halal'));
+  if (n.diet)    put(n.diet.v, d.diet.includes(n.diet.v));
+  for (const k in n) if (k.startsWith('ex_')) put(n[k].label, !d.has.includes(n[k].v));
+  if (n.speed)   put(`${d.prep} min`, d.prep <= 8);
+  if (n.court)   put(`${d.walk} min walk`, true);
+  if (n.budget)  put(money(d.price), d.price <= n.budget.v);
+
+  return m.filter(x => x.hot).slice(0, 4);   /* only what actually matches them */
+}
+const markChips = m => m.map(x => `<span class="at hot">${x.label}</span>`).join('');
+
 function cardHTML(d, grouped){
   const inCart = state.cart.some(i => i.id === d.id);
   const where  = grouped ? d.stall : `${d.stall} · ${d.courtName}`;
@@ -63,7 +94,13 @@ function cardHTML(d, grouped){
       <div class="ctext"><h3>${d.name}</h3><p class="merch">${where}</p></div>
     </div>
     <p class="desc">${d.desc}</p>
-    <div class="attrs">${chipsFor(d).map(([t,g]) => `<span class="at${g?' diet':''}">${t}</span>`).join('')}</div>
+    <div class="attrs">${(() => {
+        const m = marksFor(d);
+        const said = m.map(x => x.label.toLowerCase());
+        const rest = chipsFor(d).filter(([t]) => !said.includes(t.toLowerCase()))
+                                .slice(0, Math.max(0, 3 - m.length));
+        return markChips(m) + rest.map(([t,g]) => `<span class="at${g?' diet':''}">${t}</span>`).join('');
+      })()}</div>
     <div class="card-foot">
       <div class="pricebox"><span class="price num">${money(d.price)}</span><span class="prep">${d.prep} min</span></div>
       <button class="add${inCart?' in':''}" data-add="${d.id}">${inCart?'Added':'Add'}</button>
@@ -247,6 +284,7 @@ function runAnalysis(){
     `Found <b>${nStall}</b> distinct stalls`,
     `Grouped them into <b>${nCat}</b> categories that fit this menu`,
     `Extracted flavour, texture, heaviness and dietary tags for <b>${rows.length}</b> dishes`,
+    `Estimated calories and protein for <b>${rows.length}</b> dishes by comparing them with similar items already on FoodFlow — shown to customers as estimates, yours to correct`,
     `Wrote a customer-facing line for <b>${rows.filter(r => !r.hadDesc).length}</b> dishes with no description`,
     flags ? `Flagged <b>${flags}</b> row${flags>1?'s':''} for you to check` : `Nothing needs your attention`
   ];
@@ -300,6 +338,25 @@ const ATTR = [
   [/cauliflower|veg/i,        { d:'Spiced cauliflower briyani, fully vegetarian.', f:'rice', t:['dry'], h:3, sp:1, dt:['vegetarian','halal'], hs:[], c:'Indian' }],
   [/lassi/i,                  { d:'Chilled sweet mango yoghurt drink.', f:'drink', tp:'cold', t:['creamy'], h:1, sw:3, dt:['vegetarian','halal'], hs:['dairy'], c:'Indian' }]
 ];
+/* Merchants never upload calories. So the catalog agent estimates them at ingest —
+   from the dish name and its ingredients, anchored to comparable dishes already in the
+   catalog so a chicken rice at one stall doesn't come out wildly different from another.
+   Every estimate is flagged: an estimate shown as a measurement is a lie. */
+function estimateNutrition(name, a){
+  const form = a.f || 'rice', heavy = a.h ?? 3;
+  const peers = allDishes().filter(d => d.form === form && Math.abs(d.heavy - heavy) <= 1);
+  const pool  = peers.length >= 3 ? peers : allDishes().filter(d => d.form === form);
+  if (!pool.length) return { pro: 20, kcal: 500, nutEst: true };
+  const mid = arr => { const s = [...arr].sort((x,y)=>x-y); return s[Math.floor(s.length/2)]; };
+  let pro  = mid(pool.map(d => d.pro));
+  let kcal = mid(pool.map(d => d.kcal));
+  /* nudge on what the name actually says */
+  if (/salad|veg|cauliflower|lassi|juice|tea|latte/i.test(name)) { pro = Math.round(pro*0.4); kcal = Math.round(kcal*0.6); }
+  if (/chicken|beef|pork|fish|prawn|egg|paneer|tofu/i.test(name)) pro = Math.round(pro*1.15);
+  if (/fried|crisp|katsu|karaage|creamy|butter/i.test(name))      kcal = Math.round(kcal*1.2);
+  return { pro, kcal, nutEst: true };
+}
+
 function buildTree(rows){
   const stalls = [];
   for (const r of rows){
@@ -311,6 +368,7 @@ function buildTree(rows){
     let k = s.cats.find(x => x.name === catName);
     if (!k){ k = { name:catName, icon, gen:true, items:[] }; s.cats.push(k); }
     const a = (ATTR.find(([re]) => re.test(r.name)) || [null,{}])[1];
+    const nut = estimateNutrition(r.name, a);
     if (/halal/.test(r.note) && a.dt && !a.dt.includes('halal')) a.dt.push('halal');
     k.items.push({
       name:r.name, price:r.price, flag:r.flag, gen:true, icon,
@@ -319,6 +377,7 @@ function buildTree(rows){
       cuisine:a.c || 'Local', form:a.f || 'rice', tex:a.t || ['dry'], temp:a.tp || 'hot',
       heavy:a.h ?? 3, fl:{ savoury:a.sv??2, sweet:a.sw??0, salty:a.sl??2, spicy:a.sp??0, sour:a.so??0 },
       diet:a.dt || [], has:a.hs || [],
+      pro:nut.pro, kcal:nut.kcal, nutEst:true,
       tint:'#f0ece2', tintD:'#2b271c'
     });
   }
@@ -492,6 +551,7 @@ function parse(t){
   if (/\bcold\b|\biced\b|refreshing/.test(q)) setNeed('temp','cold').v='cold';
   else if (/\bwarm\b|something hot/.test(q)) setNeed('temp','warm').v='hot';
   if (/quick|fast|in a rush|hurry|no time|rushing/.test(q)) setNeed('speed','in a rush').v=1;
+  if (/protein|gym|workout|gains|bulk|lifting|muscle/.test(q)) setNeed('protein','high in protein').v=1;
   if (/deliver|send it|bring it|don'?t want to walk|too far|can'?t leave|stuck in/.test(q)){
     state.fulfil = 'deliver'; state.carrier = state.carrier || cheapest(); setNeed('fulfil','delivered to me'); }
   else if (/collect|pick ?up|i'?ll walk|walk over|on my way there/.test(q)){
@@ -515,6 +575,7 @@ function score(d,n){
   if (n.temp) s += d.temp === n.temp.v ? 2 : -2;
   if (n.speed) s += d.prep <= 8 ? 2 : -1;
   if (n.court) s += n.court.v === 'near' ? (18 - d.walk) * 0.2 : (d.court === n.court.v ? 3 : -2.5);
+  if (n.protein) s += d.pro >= 30 ? 2.5 : d.pro >= 22 ? 1 : -2;
   if (n.budget) s += 0.5;
   return s;
 }
@@ -544,7 +605,7 @@ function replyLocal(text){
   const q = text.toLowerCase().trim();
 
   /* offline: still answer "what's in it" from the catalog rather than pitching */
-  if (/(what'?s in|whats in|ingredient|what can i (pick|choose)|tell me (more|about)|more about|describe|what comes with)/.test(q)){
+  if (/(what'?s in|whats in|ingredient|what can i (pick|choose)|tell me (more|about)|more about|describe|what comes with|which (one|ones)|high in protein|healthiest|vegetarian)/.test(q)){
     const all = allDishes();
     const hit = all.find(d => q.includes(d.name.toLowerCase()))
       || all.find(d => d.name.toLowerCase().replace(/[()]/g,'').split(/\s+/).filter(w=>w.length>3).every(w=>q.includes(w)))
@@ -638,6 +699,7 @@ async function reply(text){
       why:   d.why || [],
       chips: d.chips || null,
       focusId: d.focusId || null,
+      highlight: d.highlight || null,
       go:    !!d.go
     };
   } catch (err){
@@ -666,23 +728,30 @@ function bubble(role, html){ const w = document.createElement('div');
 function recs(items, whys){ const w = document.createElement('div'); w.className='msg ai';
   w.innerHTML = `<div class="rec">` + items.map((d,i)=>`
     <div class="rec-item"><div class="rec-tile" style="background:${dark()?d.tintD:d.tint}">${d.icon}</div>
-      <div class="rec-t"><b>${d.name}</b><span>${money(d.price)} · ${d.courtName} · ${d.walk} min</span></div>
+      <div class="rec-t"><b>${d.name}</b><span>${money(d.price)} · ${d.courtName} · ${d.walk} min</span>
+        ${marksFor(d).length ? `<span class="rmarks">${markChips(marksFor(d))}</span>` : ''}</div>
       <button class="rec-add" data-add="${d.id}">Add</button></div>
     ${whys&&whys[i]?`<div class="why"><em>↳</em> ${whys[i]}</div>`:''}`).join('') + `</div>`;
   log.appendChild(w); scroll(); }
 function detailCard(d){
   const w = document.createElement('div'); w.className = 'msg ai';
-  const picking = state.picking && state.picking.id === d.id ? state.picking.chosen : [];
+  const pick = state.picking && state.picking.id === d.id ? state.picking : null;
+  const picking = pick ? pick.chosen : [];
+  const hl = pick && pick.highlight ? pick.highlight : null;
+  const marked = hl ? hl.choices : [];
   const o = d.opts;
   w.innerHTML = `<div class="detail">
       <div class="det-top">
         <div class="rec-tile" style="background:${dark()?d.tintD:d.tint}">${d.icon}</div>
-        <div class="rec-t"><b>${d.name}</b><span>${money(d.price)} · ${d.stall} · ${d.walk} min walk</span></div>
+        <div class="rec-t"><b>${d.name}</b><span>${money(d.price)} · ${d.stall} · ${d.walk} min walk</span>
+          ${marksFor(d).length ? `<span class="rmarks">${markChips(marksFor(d))}</span>` : ''}</div>
       </div>
       ${d.ing?.length ? `<div class="ing"><span class="ing-l">In it</span>${d.ing.map(i=>`<span class="ing-i">${i}</span>`).join('')}</div>` : ''}
+      ${d.pro ? `<div class="ing"><span class="ing-l">Rough</span><span class="ing-i">~${d.pro}g protein</span><span class="ing-i">~${d.kcal} kcal</span><span class="est-note">estimated from ingredients, not measured</span></div>` : ''}
       ${o ? `<div class="opts" data-for="${d.id}">
           <div class="opts-h"><span>${o.label}</span><span class="cnt">${picking.length}/${o.pick}</span></div>
-          <div class="opt-list">${o.choices.map(c=>`<button class="opt${picking.includes(c)?' on':''}" data-opt="${c}">${c}</button>`).join('')}</div>
+          ${hl ? `<div class="hl-note"><span class="hl-dot"></span>${marked.length} marked as ${hl.note}</div>` : ''}
+          <div class="opt-list">${o.choices.map(c=>`<button class="opt${picking.includes(c)?' on':''}${marked.includes(c)?' hl':''}" data-opt="${c}">${c}</button>`).join('')}</div>
           <button class="opt-add" data-optadd="${d.id}"${picking.length?'':' disabled'}>${picking.length?`Add with ${picking.length} pick${picking.length>1?'s':''} · ${money(d.price)}`:'Pick at least one'}</button>
         </div>` : `<button class="rec-add det-add" data-add="${d.id}">Add · ${money(d.price)}</button>`}
     </div>`;
@@ -724,8 +793,14 @@ log.addEventListener('click', e => {
   if (a){ addToCart(a.dataset.add); a.textContent='Added'; a.classList.add('in'); return; }
   const s = e.target.closest('[data-say]'); if (s) send(s.dataset.say);
 });
+let lastSent = '', lastSentAt = 0;
 async function send(text){
   if (!text.trim()) return;
+  /* a voice UI can fire twice from a stray late event or a double tap — never send the
+     same sentence twice in a row within a couple of seconds */
+  const now = Date.now();
+  if (text.trim() === lastSent && now - lastSentAt < 2500) return;
+  lastSent = text.trim(); lastSentAt = now;
   bubble('me', text.replace(/</g,'&lt;'));
   const t = document.createElement('div'); t.className='msg ai';
   t.innerHTML = `<div class="typing"><i></i><i></i><i></i></div>`; log.appendChild(t); scroll();
@@ -733,7 +808,8 @@ async function send(text){
   const r = await reply(text);
   bubble('ai', r.say);
   if (r.focusId && byId(r.focusId)){
-    state.picking = { id: r.focusId, chosen: [] };
+    const keep = (state.picking && state.picking.id === r.focusId) ? state.picking.chosen : [];
+    state.picking = { id: r.focusId, chosen: keep, highlight: r.highlight || null };
     detailCard(byId(r.focusId));
     state.lastShown = [r.focusId];
   } else if (r.items && r.items.length){
@@ -807,7 +883,7 @@ function resetQuiet(){
 }
 
 function endMic(sendIt){
-  const wasListening = listening;
+  if (!listening) { sealed = true; setTimeout(() => { sealed = false; }, 700); return; }
   sealed = true;
   listening = false;
   clearTimeout(quietTimer); clearTimeout(capTimer);
@@ -817,7 +893,7 @@ function endMic(sendIt){
   const text = (heard || inp.value || '').trim();
   heard = '';
   inp.value = '';
-  if (sendIt && wasListening && text) send(text);
+  if (sendIt && text) send(text);
   /* let the late events drain before the mic can be armed again */
   setTimeout(() => { sealed = false; }, 700);
 }

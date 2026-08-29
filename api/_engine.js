@@ -60,6 +60,7 @@ function parse(text, prior = {}) {
   else if (/\bwarm\b|something hot/.test(q)) set('temp', 'warm', 'hot');
 
   if (/quick|fast|in a rush|hurry|no time|rushing/.test(q)) set('speed', 'in a rush', 1);
+  if (/protein|gym|workout|gains|bulk|lifting|muscle/.test(q)) set('protein', 'high in protein', 1);
 
   for (const c of COURTS) {
     if (!c.live) continue;
@@ -85,6 +86,7 @@ function score(d, n) {
   if (n.temp) s += d.temp === n.temp.v ? 2 : -2;
   if (n.speed) s += d.prep <= 8 ? 2 : -1;
   if (n.court) s += n.court.v === 'near' ? (18 - d.walk) * 0.2 : (d.court === n.court.v ? 3 : -2.5);
+  if (n.protein) s += d.pro >= 30 ? 2.5 : d.pro >= 22 ? 1 : -2;
   if (n.budget) s += 0.5;
   return s;
 }
@@ -141,8 +143,9 @@ function findFocus(text, lastShown = []) {
     }
   }
 
-  /* "it" / "that one" — only unambiguous if we just showed exactly one */
-  if (/\b(it|that one|this one|that|the first one)\b/.test(q) && lastShown.length === 1) return byId(lastShown[0]);
+  /* No dish named. If we just showed exactly one, that is what "which ones",
+     "what's in it" and "how does that work" are all about. */
+  if (lastShown.length === 1) return byId(lastShown[0]);
   return null;
 }
 
@@ -161,6 +164,64 @@ function describe(d){
   return bits.join(' ');
 }
 
+
+/* ── what the agent can point at ───────────────────────────────────────────
+   Asking "which of these are high in protein" is a question about the picker
+   the customer is looking at. The agent answers by CHANGING that picker, not by
+   describing it in prose. Which ingredients carry which tag is a fact from the
+   catalog, never the model's opinion. */
+const ING_TAGS = {
+  /* yong tau foo */
+  'Fish ball':['protein'], 'Fish cake':['protein'], 'Meatball':['protein'],
+  'Seaweed chicken roll':['protein','fried'], 'Soft tofu':['protein','veg','lowcal'],
+  'Tau pok':['protein','veg','fried'], 'Beancurd skin':['protein','veg','fried'],
+  'Stuffed brinjal':['veg'], 'Stuffed chilli':['veg'], 'Stuffed okra':['veg','lowcal'],
+  'Long bean':['veg','lowcal'], 'Button mushroom':['veg','lowcal'],
+  /* mala */
+  'Lotus root':['veg'], 'Cauliflower':['veg','lowcal'], 'Lettuce':['veg','lowcal'],
+  'Enoki mushroom':['veg','lowcal'], 'Baby corn':['veg','lowcal'],
+  'Luncheon meat':['protein','fried'], 'Sliced pork':['protein'], 'Chicken slices':['protein'],
+  'Prawns':['protein','lowcal'], 'Quail egg':['protein'], 'Wide noodles':[],
+  /* economy rice */
+  'Braised egg':['protein'], 'Sweet & sour pork':['protein','fried'], 'Curry chicken':['protein'],
+  'Mapo tofu':['protein'], 'Fried fish':['protein','fried'], 'Ngoh hiang':['protein','fried'],
+  'Stir-fried cabbage':['veg','lowcal'], 'Sambal brinjal':['veg'], 'Stir-fried beansprouts':['veg','lowcal'],
+  'Long bean with egg':['veg','protein'],
+  /* chargrill sides */
+  'Coleslaw':['veg'], 'Fries':['veg','fried'], 'Baked beans':['veg','protein'],
+  'Garden salad':['veg','lowcal'], 'Mashed potato':['veg'], 'Buttered corn':['veg','lowcal']
+};
+
+const HL = [
+  ['protein', /protein|bulk|gains|after (the )?gym|post.?workout|filling.?up/i, 'highest in protein'],
+  ['veg',     /vegetarian|veggie|meat.?free|no meat|plant/i,                    'vegetarian'],
+  ['lowcal',  /low.?cal|lighter|lightest|healthiest|healthy|least heavy|cutting/i, 'lightest'],
+  ['fried',   /fried|deep.?fried|oily|greasy/i,                                 'the fried ones']
+];
+
+/* A question about the picker, even without the words "tell me more". */
+function isOptionQuestion(text){
+  const q = String(text || '');
+  return /\b(which|what)\b/i.test(q) && HL.some(([, re]) => re.test(q));
+}
+
+function highlightFor(dish, text){
+  if (!dish || !dish.opts) return null;
+  for (const [tag, re, note] of HL){
+    if (!re.test(String(text || ''))) continue;
+    const choices = dish.opts.choices.filter(c => (ING_TAGS[c] || []).includes(tag));
+    if (choices.length) return { tag, note, choices };
+  }
+  return null;
+}
+
+function sayHighlight(d, h){
+  const list = h.choices.length > 1
+    ? h.choices.slice(0, -1).join(', ') + ' and ' + h.choices[h.choices.length - 1]
+    : h.choices[0];
+  return `Of the ${d.opts.choices.length} you can pick, these ${h.choices.length} are ${h.note}: <b>${list}</b>. I've marked them below — tap the ones you want.`;
+}
+
 function rank(needs) {
   return allDishes().map(d => ({ d, s: score(d, needs) }))
     .filter(x => x.s >= 0)
@@ -168,4 +229,5 @@ function rank(needs) {
 }
 
 module.exports = { COURTS, allDishes, byId, money, parse, score, because, rank,
-                   isDetailQuestion, findFocus, describe };
+                   isDetailQuestion, findFocus, describe,
+                   isOptionQuestion, highlightFor, sayHighlight };
