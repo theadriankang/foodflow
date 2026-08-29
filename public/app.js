@@ -667,21 +667,88 @@ async function send(text){
 }
 comp.addEventListener('submit', e => { e.preventDefault(); const v = inp.value; inp.value=''; send(v); });
 
-/* speech */
+/* ══════════ speech ══════════
+   The browser API defaults to continuous=false, which ends the session at the first
+   pause — so "something soupy… under four dollars… no pork" gets cut after "soupy".
+   Instead we stay open across pauses, accumulate the transcript, and decide it's
+   finished either when the user taps the mic or after a real silence. Chrome also
+   ends the session on its own every so often; we restart it underneath the user. */
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-let rec=null, listening=false;
-if (!SR){ mic.style.opacity='.4'; mic.title='Voice needs Chrome or Edge'; }
-else { rec = new SR(); rec.lang='en-SG'; rec.interimResults=true; rec.continuous=false;
-  rec.onresult = e => { let s=''; for (const r of e.results) s += r[0].transcript; inp.value = s;
-    if (e.results[e.results.length-1].isFinal){ const v=s.trim(); inp.value=''; stopMic(); if (v) send(v); } };
-  rec.onerror = ev => { stopMic(); micNote.textContent = ev.error==='not-allowed'?'Mic blocked — type instead':'Didn’t catch that';
-    setTimeout(()=>micNote.textContent='Every action is logged',3000); };
-  rec.onend = stopMic; }
-function stopMic(){ listening=false; mic.classList.remove('live');
-  if (micNote.textContent==='Listening…') micNote.textContent='Every action is logged'; }
-mic.addEventListener('click', () => { if (!rec) return toast('Voice needs Chrome or Edge');
-  if (listening){ rec.stop(); return stopMic(); }
-  try { rec.start(); listening=true; mic.classList.add('live'); micNote.textContent='Listening…'; } catch(_){ stopMic(); } });
+const SILENCE_MS = 2600;    /* quiet for this long = they've finished talking */
+const MAX_MS     = 45000;   /* hard stop, so a hot mic can't run forever */
+
+let rec = null, listening = false, heard = '', quietTimer = null, capTimer = null;
+
+if (!SR){
+  mic.style.opacity = '.4';
+  mic.title = 'Voice input needs Chrome or Edge';
+} else {
+  rec = new SR();
+  rec.lang = 'en-SG';
+  rec.interimResults = true;
+  rec.continuous = true;
+
+  rec.onresult = e => {
+    let interim = '';
+    for (let i = e.resultIndex; i < e.results.length; i++){
+      const t = e.results[i][0].transcript;
+      if (e.results[i].isFinal) heard += t + ' ';
+      else interim += t;
+    }
+    inp.value = (heard + interim).trim();
+    if (inp.value) micNote.textContent = 'Listening… tap the mic to send';
+    resetQuiet();
+  };
+
+  rec.onerror = ev => {
+    if (ev.error === 'no-speech') return;              /* normal during a pause */
+    if (ev.error === 'aborted' && listening) return;   /* our own restart */
+    const msg = ev.error === 'not-allowed'
+      ? 'Mic blocked — allow it in the address bar, or just type'
+      : 'Didn’t catch that — try typing';
+    endMic(false);
+    micNote.textContent = msg;
+    setTimeout(() => { if (!listening) micNote.textContent = 'Every action is logged'; }, 3600);
+  };
+
+  /* Chrome ends the session periodically on its own. If the user hasn't
+     tapped stop, quietly start it again so their sentence isn't chopped. */
+  rec.onend = () => {
+    if (!listening) return;
+    try { rec.start(); } catch (_) { endMic(true); }
+  };
+}
+
+function resetQuiet(){
+  clearTimeout(quietTimer);
+  quietTimer = setTimeout(() => { if (listening) endMic(true); }, SILENCE_MS);
+}
+
+function endMic(sendIt){
+  const wasListening = listening;
+  listening = false;
+  clearTimeout(quietTimer); clearTimeout(capTimer);
+  try { rec && rec.stop(); } catch (_) {}
+  mic.classList.remove('live');
+  micNote.textContent = 'Every action is logged';
+  const text = (heard || inp.value || '').trim();
+  heard = '';
+  if (sendIt && wasListening && text){ inp.value = ''; send(text); }
+}
+
+mic.addEventListener('click', () => {
+  if (!rec) return toast('Voice input needs Chrome or Edge');
+  if (listening) return endMic(true);        /* tap again = send what you've said */
+  heard = ''; inp.value = '';
+  try {
+    rec.start();
+    listening = true;
+    mic.classList.add('live');
+    micNote.textContent = 'Listening… take your time';
+    resetQuiet();
+    capTimer = setTimeout(() => { if (listening) endMic(true); }, MAX_MS);
+  } catch (_) { endMic(false); }
+});
 
 /* authorise */
 function openAuth(){ if (!state.cart.length) return;
