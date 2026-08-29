@@ -8,9 +8,33 @@
    to end, gone on a cold start. The health endpoint says which one is active, so
    nobody has to guess. */
 
-const URL_  = process.env.KV_REST_API_URL   || process.env.UPSTASH_REDIS_REST_URL;
-const TOKEN = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
+/* Vercel's storage integrations let you choose the env-var prefix, and Upstash,
+   Vercel KV and Redis all name things slightly differently. Rather than make the
+   deployer match our spelling, find whatever REST credentials are present. */
+function discoverKV() {
+  const e = process.env;
+  const known = [
+    ['KV_REST_API_URL', 'KV_REST_API_TOKEN'],
+    ['UPSTASH_REDIS_REST_URL', 'UPSTASH_REDIS_REST_TOKEN'],
+    ['STORAGE_REST_API_URL', 'STORAGE_REST_API_TOKEN'],
+    ['REDIS_REST_API_URL', 'REDIS_REST_API_TOKEN']
+  ];
+  for (const [u, t] of known) if (e[u] && e[t]) return { url: e[u], token: e[t], via: u };
+
+  for (const key of Object.keys(e)) {
+    const m = key.match(/^(.*)_REST_API_URL$/) || key.match(/^(.*)_REST_URL$/);
+    if (!m || !/^https?:\/\//.test(e[key] || '')) continue;
+    const token = e[`${m[1]}_REST_API_TOKEN`] || e[`${m[1]}_REST_TOKEN`];
+    if (token) return { url: e[key], token, via: key };
+  }
+  return null;
+}
+
+const found   = discoverKV();
+const URL_    = found?.url;
+const TOKEN   = found?.token;
 const durable = Boolean(URL_ && TOKEN);
+const via     = found?.via || null;
 
 const mem = new Map();
 
@@ -53,4 +77,4 @@ const getDraft = id => get(draftKey(id));
 const setDraft = (id, d) => set(draftKey(id), d);
 const clearDraft = id => set(draftKey(id), null);
 
-module.exports = { durable, get, set, getPublished, publish, getDraft, setDraft, clearDraft };
+module.exports = { durable, via, get, set, getPublished, publish, getDraft, setDraft, clearDraft };
