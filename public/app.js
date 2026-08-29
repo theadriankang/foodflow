@@ -54,18 +54,47 @@ function drawCourts(){
 function drawTabs(){
   tabs.innerHTML = catsFor().map(c => `<button class="tab" role="tab" aria-selected="${c===state.cat}" data-cat="${c}">${c}</button>`).join('');
 }
+function cardHTML(d, grouped){
+  const inCart = state.cart.some(i => i.id === d.id);
+  const where  = grouped ? d.stall : `${d.stall} · ${d.courtName}`;
+  return `<article class="card">
+    <div class="card-top">
+      <div class="tile" style="background:${dark()?d.tintD:d.tint}">${d.icon}</div>
+      <div class="ctext"><h3>${d.name}</h3><p class="merch">${where}</p></div>
+    </div>
+    <p class="desc">${d.desc}</p>
+    <div class="attrs">${chipsFor(d).map(([t,g]) => `<span class="at${g?' diet':''}">${t}</span>`).join('')}</div>
+    <div class="card-foot">
+      <div class="pricebox"><span class="price num">${money(d.price)}</span><span class="prep">${d.prep} min</span></div>
+      <button class="add${inCart?' in':''}" data-add="${d.id}">${inCart?'Added':'Add'}</button>
+    </div>
+  </article>`;
+}
+
 function drawGrid(){
-  grid.innerHTML = visible().map(d => {
-    const inCart = state.cart.some(i => i.id === d.id);
-    return `<article class="card">
-      <div class="card-top"><div class="tile" style="background:${dark()?d.tintD:d.tint}">${d.icon}</div>
-        <div><h3>${d.name}</h3><p class="merch">${d.stall} · ${d.courtName}</p></div></div>
-      <p class="desc">${d.desc}</p>
-      <div class="attrs">${chipsFor(d).map(([t,g]) => `<span class="at${g?' diet':''}">${t}</span>`).join('')}</div>
-      <div class="card-foot"><span class="price num">${money(d.price)}</span><span class="prep">${d.prep} min</span>
-        <button class="add${inCart?' in':''}" data-add="${d.id}">${inCart?'Added':'Add'}</button></div>
-    </article>`;
-  }).join('');
+  const list = visible();
+  if (!list.length){
+    grid.innerHTML = `<p class="empty">Nothing on campus matches that filter. Try another canteen or category.</p>`;
+    return;
+  }
+  /* Browsing everything? Break it up by canteen — a flat wall of 35 cards reads as a
+     spreadsheet, and which canteen a dish is in is the thing people actually navigate by. */
+  const grouped = state.court === 'all' && state.cat === 'All';
+  if (grouped){
+    grid.innerHTML = COURTS.filter(c => c.live)
+      .map(c => ({ c, items: list.filter(d => d.court === c.id) }))
+      .filter(x => x.items.length)
+      .map(({ c, items }) => `<section class="cgroup">
+          <div class="sec-canteen">
+            <h2>${c.name}</h2>
+            <span class="meta">${c.loc} · ${c.walk} min walk · ${items.length} dishes</span>
+            <span class="rule"></span>
+          </div>
+          <div class="grid">${items.map(d => cardHTML(d, true)).join('')}</div>
+        </section>`).join('');
+  } else {
+    grid.innerHTML = `<div class="grid">${list.map(d => cardHTML(d, false)).join('')}</div>`;
+  }
   heroSub.innerHTML = `<b>${allDishes().length}</b> real dishes across <b>${COURTS.filter(c=>c.live).length}</b> campus canteens. Tell the agent what you're craving and where you're headed — it finds it, pays for it, and tells you where to collect.`;
 }
 courts.addEventListener('click', e => { const b = e.target.closest('[data-court]'); if (!b) return;
@@ -843,8 +872,8 @@ async function boot(){
   } catch (err){
     console.error('[foodflow] could not load the catalog:', err.message);
     document.getElementById('grid').innerHTML =
-      '<article class="card"><h3>Catalog unavailable</h3>' +
-      '<p class="desc">Run <code>npm run dev</code> (or open the deployed site) — the catalog is served by the API, not baked into the page.</p></article>';
+      '<p class="empty">Catalog unavailable. Run <code>npm run dev</code>, or open the deployed site — ' +
+      'the catalog is served by the API rather than baked into the page.</p>';
     return;
   }
   drawCourts(); drawTabs(); drawGrid(); sync();
