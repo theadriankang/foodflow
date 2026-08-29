@@ -1,0 +1,14 @@
+{
+  "name": "foodflow",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Conversational commerce agent for campus canteens. LifeHack 2026 — Visa track.",
+  "scripts": {
+    "dev": "node server.js",
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5"
+  },
+  "engines": { "node": ">=18" }
+}

@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FoodFlow — conversational commerce for every canteen</title>
+<meta name="description" content="Discover, decide and pay for campus food in a single conversation.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<header class="hdr">
+  <div class="hdr-in">
+    <div class="logo"><span class="logo-mk"></span>FoodFlow</div>
+    <div class="seg">
+      <button id="vStore" aria-pressed="true">Storefront</button>
+      <button id="vMerch" aria-pressed="false">Merchant</button>
+    </div>
+    <div class="hdr-sp"></div>
+    <div class="hdr-loc">NUS <b>Kent Ridge</b></div>
+    <button class="cart-btn" id="cartBtn">Cart <span class="cart-ct num" id="cartCt">0</span></button>
+  </div>
+</header>
+
+<main class="page">
+  <!-- ══ STOREFRONT ══ -->
+  <section class="view" id="storeView">
+    <div class="hero">
+      <h1>Every canteen on campus, in one conversation.</h1>
+      <p id="heroSub">Real stalls and real prices from across Kent Ridge. Tell the agent what you're craving and where you're headed — it finds it, pays for it, and tells you where to collect.</p>
+    </div>
+    <div class="askbar" id="askBar">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" style="color:var(--ink-3);flex:none">
+        <circle cx="7" cy="7" r="4.6"/><path d="M10.5 10.5L14 14" stroke-linecap="round"/></svg>
+      <span class="ph">Something soupy under $4, I'm heading to Frontier…</span>
+      <span class="kbd mono">↵</span>
+    </div>
+    <div class="courts" id="courts"></div>
+    <div class="tabs-row"><div class="tabs" id="tabs" role="tablist"></div>
+      <div class="tab-src"><span class="spark"></span> categories written by the catalog agent</div></div>
+    <div class="grid" id="grid"></div>
+  </section>
+
+  <!-- ══ MERCHANT ══ -->
+  <section class="view" id="merchView" hidden></section>
+</main>
+
+<button class="launch" id="launch"><span class="orb"></span> Ask the food agent</button>
+
+<div class="wgt" id="wgt" hidden role="dialog" aria-label="FoodFlow agent">
+  <div class="w-hdr">
+    <div class="w-av">🥣</div>
+    <div class="t"><b>FoodFlow agent</b><span id="wSub"><span class="dotg"></span> Online</span></div>
+    <button class="icon-btn" id="closeW" aria-label="Minimise">−</button>
+  </div>
+  <div class="screen" id="scChat">
+    <div class="w-body" id="log"></div>
+    <div class="und" id="und" hidden><span class="und-l">Got it</span><div class="und-w" id="undW"></div></div>
+    <div class="strip" id="strip" hidden>
+      <div class="s-t"><b id="stripT">1 item</b>Agent is ready to pay</div>
+      <button class="s-go" id="stripGo">Authorise</button></div>
+    <div class="w-foot">
+      <form class="comp" id="comp">
+        <input id="inp" autocomplete="off" placeholder="Type, or tap the mic…" aria-label="Message the agent">
+        <button type="button" class="mic" id="mic" aria-label="Speak">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+            <rect x="5.6" y="1.8" width="4.8" height="8" rx="2.4"/><path d="M3.2 7.4a4.8 4.8 0 0 0 9.6 0M8 12.2V14.2"/></svg></button>
+        <button type="submit" class="send" aria-label="Send">
+          <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M8 13V3M3.6 7.4 8 3l4.4 4.4"/></svg></button>
+      </form>
+      <div class="foot-note"><span>Search · compare · pay · collect</span><span id="micNote">Every action is logged</span></div>
+    </div>
+  </div>
+  <div class="screen" id="scAuth" hidden><div class="auth" id="authBody"></div></div>
+  <div class="screen" id="scColl" hidden><div class="coll" id="collBody"></div></div>
+  <div class="scrim" id="scrim" hidden></div>
+</div>
+<div class="toast" id="toast"></div>
+<script src="/app.js"></script>
+</body>
+</html>

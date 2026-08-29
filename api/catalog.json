@@ -1,0 +1,1536 @@
+[
+ {
+  "id": "deck",
+  "name": "The Deck",
+  "loc": "FASS · AS8",
+  "walk": 5,
+  "live": true,
+  "stalls": [
+   {
+    "name": "Yong Tau Foo & Laksa",
+    "cuisine": "Local",
+    "cats": [
+     {
+      "name": "Soup & laksa",
+      "items": [
+       {
+        "name": "Yong Tau Foo Soup (6 items)",
+        "price": 3.1,
+        "prep": 7,
+        "icon": "🍲",
+        "desc": "Pick your own ingredients in clear soup with bee hoon.",
+        "cuisine": "Local",
+        "form": "noodles",
+        "tex": [
+         "soupy"
+        ],
+        "temp": "hot",
+        "heavy": 2,
+        "fl": {
+         "savoury": 2,
+         "sweet": 0,
+         "salty": 2,
+         "spicy": 0,
+         "sour": 0
+        },
+        "diet": [
+         "halal"
+        ],
+        "has": [
+         "fish",
+         "soy"
+        ],
+        "tint": "#e8eef1",
+        "tintD": "#1b262b",
+        "id": "d1",
+        "court": "deck",
+        "courtName": "The Deck",
+        "walk": 5,
+        "stall": "Yong Tau Foo & Laksa",
+        "cat": "Soup & laksa"
+       },
+       {
+        "name": "Laksa Yong Tau Foo",
+        "price": 3.6,
+        "prep": 8,
+        "icon": "🍜",
+        "desc": "Same pick-and-mix, in coconut laksa gravy.",
+        "cuisine": "Local",
+        "form": "noodles",
+        "tex": [
+         "soupy",
+         "creamy"
+        ],
+        "temp": "hot",
+        "heavy": 4,
+        "fl": {
+         "savoury": 3,
+         "sweet": 0,
+         "salty": 2,
+         "spicy": 2,
+         "sour": 0
+        },
+        "diet": [],
+        "has": [
+         "fish",
+         "shellfish",
+         "dairy"
+        ],
+        "tint": "#f2e8e4",
+        "tintD": "#2e211d",
+        "id": "d2",
+        "court": "deck",
+        "courtName": "The Deck",
+        "walk": 5,
+        "stall": "Yong Tau Foo & Laksa",
+        "cat": "Soup & laksa"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "name": "Ban Mian & Noodles",
+    "cuisine": "Chinese",
+    "cats": [
+     {
+      "name": "Noodles",
+      "items": [
+       {
+        "name": "Ban Mian",
+        "price": 3.5,
+        "prep": 9,
+        "icon": "🍜",
+        "desc": "Hand-torn noodles in anchovy broth with egg.",
+        "cuisine": "Chinese",
+        "form": "noodles",
+        "tex": [
+         "soupy"
+        ],
+        "temp": "hot",
+        "heavy": 3,
+        "fl": {
+         "savoury": 2,
+         "sweet": 0,
+         "salty": 2,
+         "spicy": 0,
+         "sour": 0
+        },
+        "diet": [],
+        "has": [
+         "egg",
+         "gluten",
+         "fish"
+        ],
+        "tint": "#efeae3",
+        "tintD": "#2a251d",
+        "id": "d3",
+        "court": "deck",
+        "courtName": "The Deck",
+        "walk": 5,
+        "stall": "Ban Mian & Noodles",
+        "cat": "Noodles"
+       },
+       {
+        "name": "Tomato Minced Meat Noodle",
+        "price": 4,
+        "prep": 10,
+        "icon": "🍝",
+        "desc": "Tangy tomato broth, minced pork, thin noodles.",
+        "cuisine": "Chinese",
+        "form": "noodles",
+        "tex": [
+         "soupy"
+        ],
+        "temp": "hot",
+        "heavy": 3,
+        "fl": {
+         "savoury": 2,
+         "sweet": 0,
+         "salty": 2,
+         "spicy": 0,
+         "sour": 2
+        },
+        "diet": [],
+        "has": [
+         "pork",
+         "gluten"
+        ],
+        "tint": "#f2e8e4",
+        "tintD": "#2e211d",
+        "id": "d4",
+        "court": "deck",
+        "courtName": "The Deck",
+        "walk": 5,
+        "stall": "Ban Mian & Noodles",
+        "cat": "Noodles"
+       },
+       {
+        "name": "Pork Ribs Noodle",
+        "price": 4.5,
+        "prep": 11,
+        "icon": "🥣",
+        "desc": "Peppery pork rib soup with noodles.",
+        "cuisine": "Chinese",
+        "form": "noodles",
+        "tex": [
+         "soupy"
+        ],
+        "temp": "hot",
+        "heavy": 4,
+        "fl": {
+         "savoury": 2,
+         "sweet": 0,
+         "salty": 2,
+         "spicy": 0,
+         "sour": 0
+        },
+        "diet": [],
+        "has": [
+         "pork",
+         "gluten"
+        ],
+        "tint": "#efeae3",
+        "tintD": "#2a251d",
+        "id": "d5",
+        "court": "deck",
+        "courtName": "The Deck",
+        "walk": 5,
+        "stall": "Ban Mian & Noodles",
+        "cat": "Noodles"
+       }
+      ]
+     },
+     {
+      "name": "Dumplings",
+      "items": [
+       {
+        "name": "Dumpling Soup",
+        "price": 3.5,
+        "prep": 8,
+        "icon": "🥟",
+        "desc": "Pork and chive dumplings in clear soup.",
+        "cuisine": "Chinese",
+        "form": "noodles",
+        "tex": [
+         "soupy"
+        ],
+        "temp": "hot",
+        "heavy": 2,
+        "fl": {
+         "savoury": 2,
+         "sweet": 0,
+         "salty": 2,
+         "spicy": 0,
+         "sour": 0
+        },
+        "diet": [],
+        "has": [
+         "pork",
+         "gluten"
+        ],
+        "tint": "#e8eef1",
+        "tintD": "#1b262b",
+        "id": "d6",
+        "court": "deck",
+        "courtName": "The Deck",
+        "walk": 5,
+        "stall": "Ban Mian & Noodles",
+        "cat": "Dumplings"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "name": "Japanese Food",
+    "cuisine": "Japanese",
+    "cats": [
+     {
+      "name": "Donburi",
+      "items": [
+       {
+        "name": "Chicken Katsu Don",
+        "price": 4.3,
+        "prep": 10,
+        "icon": "🍱",
+        "desc": "Crisp fried cutlet over rice in sweet-savoury sauce.",
+        "cuisine": "Japanese",
+        "form": "rice",
+        "tex": [
+         "crispy"
+        ],
+        "temp": "hot",
+        "heavy": 4,
+        "fl": {
+         "savoury": 3,
+         "sweet": 2,
+         "salty": 2,
+         "spicy": 0,
+         "sour": 0
+        },
+        "diet": [],
+        "has": [
+         "chicken",
+         "egg",
+         "gluten"
+        ],
+        "tint": "#e8efe9",
+        "tintD": "#1d2b24",
+        "id": "d7",
+        "court": "deck",
+        "courtName": "The Deck",
+        "walk": 5,
+        "stall": "Japanese Food",
+        "cat": "Donburi"
+       },
+       {
+        "name": "Chicken Katsu Curry Don",
+        "price": 4.6,
+        "prep": 11,
+        "icon": "🍛",
+        "desc": "Katsu with thick Japanese curry over rice.",
+        "cuisine": "Japanese",
+        "form": "rice",
+        "tex": [
+         "crispy"
+        ],
+        "temp": "hot",
+        "heavy": 5,
+        "fl": {
+         "savoury": 3,
+         "sweet": 1,
+         "salty": 2,
+         "spicy": 0,
+         "sour": 0
+        },
+        "diet": [],
+        "has": [
+         "chicken",
+         "egg",
+         "gluten"
+        ],
+        "tint": "#f0ece2",
+        "tintD": "#2b271c",
+        "id": "d8",
+        "court": "deck",
+        "courtName": "The Deck",
+        "walk": 5,
+        "stall": "Japanese Food",
+        "cat": "Donburi"
+       },
+       {
+        "name": "Chicken & Salmon Don",
+        "price": 5.6,
+        "prep": 12,
+        "icon": "🍣",
+        "desc": "Grilled chicken and salmon over seasoned rice.",
+        "cuisine": "Japanese",
+        "form": "rice",
+        "tex": [
+         "tender"
+        ],
+        "temp": "hot",
+        "heavy": 3,
+        "fl": {
+         "savoury": 2,
+         "sweet": 0,
+         "salty": 2,
+         "spicy": 0,
+         "sour": 0
+        },
+        "diet": [],
+        "has": [
+         "chicken",
+         "fish"
+        ],
+        "tint": "#f2e8e4",
+        "tintD": "#2e211d",
+        "id": "d9",
+        "court": "deck",
+        "courtName": "The Deck",
+        "walk": 5,
+        "stall": "Japanese Food",
+        "cat": "Donburi"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "name": "Sin Kee Chicken Rice",
+    "cuisine": "Chinese",
+    "cats": [
+     {
+      "name": "Rice plates",
+      "items": [
+       {
+        "name": "Hainanese Chicken Rice",
+        "price": 2.8,
+        "prep": 6,
+        "icon": "🍗",
+        "desc": "Poached chicken, fragrant rice, chilli on the side.",
+        "cuisine": "Chinese",
+        "form": "rice",
+        "tex": [
+         "tender"
+        ],
+        "temp": "hot",
+        "heavy": 3,
+        "fl": {
+         "savoury": 2,
+         "sweet": 0,
+         "salty": 2,
+         "spicy": 0,
+         "sour": 0
+        },
+        "diet": [
+         "halal"
+        ],
+        "has": [
+         "chicken"
+        ],
+        "tint": "#f0ece2",
+        "tintD": "#2b271c",
+        "id": "d10",
+        "court": "deck",
+        "courtName": "The Deck",
+        "walk": 5,
+        "stall": "Sin Kee Chicken Rice",
+        "cat": "Rice plates"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "name": "Liang Ban Kung Fu",
+    "cuisine": "Chinese",
+    "cats": [
+     {
+      "name": "Mala",
+      "items": [
+       {
+        "name": "Mala Xiang Guo (set)",
+        "price": 7,
+        "prep": 12,
+        "icon": "🌶️",
+        "desc": "Dry-wok stir fry, pick your ingredients and heat.",
+        "cuisine": "Chinese",
+        "form": "rice",
+        "tex": [
+         "dry"
+        ],
+        "temp": "hot",
+        "heavy": 4,
+        "fl": {
+         "savoury": 3,
+         "sweet": 0,
+         "salty": 3,
+         "spicy": 3,
+         "sour": 0
+        },
+        "diet": [],
+        "has": [
+         "gluten"
+        ],
+        "tint": "#f2e8e4",
+        "tintD": "#2e211d",
+        "id": "d11",
+        "court": "deck",
+        "courtName": "The Deck",
+        "walk": 5,
+        "stall": "Liang Ban Kung Fu",
+        "cat": "Mala"
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "frontier",
+  "name": "Frontier",
+  "loc": "Science · S16",
+  "walk": 8,
+  "live": true,
+  "stalls": [
+   {
+    "name": "Uncle Penyet",
+    "cuisine": "Indonesian",
+    "cats": [
+     {
+      "name": "Sets",
+      "items": [
+       {
+        "name": "Ayam Penyet Set",
+        "price": 5.5,
+        "prep": 11,
+        "icon": "🍗",
+        "desc": "Smashed fried chicken, sambal, rice and greens.",
+        "cuisine": "Indonesian",
+        "form": "rice",
+        "tex": [
+         "crispy"
+        ],
+        "temp": "hot",
+        "heavy": 4,
+        "fl": {
+         "savoury": 3,
+         "sweet": 0,
+         "salty": 2,
+         "spicy": 3,
+         "sour": 0
+        },
+        "diet": [
+         "halal"
+        ],
+        "has": [
+         "chicken"
+        ],
+        "tint": "#f2e8e4",
+        "tintD": "#2e211d",
+        "id": "d12",
+        "court": "frontier",
+        "courtName": "Frontier",
+        "walk": 8,
+        "stall": "Uncle Penyet",
+        "cat": "Sets"
+       },
+       {
+        "name": "Steamed Chicken Set",
+        "price": 4.8,
+        "prep": 9,
+        "icon": "🍚",
+        "desc": "Steamed chicken with rice and vegetables.",
+        "cuisine": "Indonesian",
+        "form": "rice",
+        "tex": [
+         "tender"
+        ],
+        "temp": "hot",
+        "heavy": 2,
+        "fl": {
+         "savoury": 2,
+         "sweet": 0,
+         "salty": 2,
+         "spicy": 0,
+         "sour": 0
+        },
+        "diet": [
+         "halal"
+        ],
+        "has": [
+         "chicken"
+        ],
+        "tint": "#e8efe9",
+        "tintD": "#1d2b24",
+        "id": "d13",
+        "court": "frontier",
+        "courtName": "Frontier",
+        "walk": 8,
+        "stall": "Uncle Penyet",
+        "cat": "Sets"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "name": "Asia Wok",
+    "cuisine": "Chinese",
+    "cats": [
+     {
+      "name": "Rice",
+      "items": [
+       {
+        "name": "Salted Egg Chicken Rice",
+        "price": 4.5,
+        "prep": 10,
+        "icon": "🍛",
+        "desc": "Wok-fried chicken in salted egg sauce over rice.",
+        "cuisine": "Chinese",
+        "form": "rice",
+        "tex": [
+         "crispy",
+         "creamy"
+        ],
+        "temp": "hot",
+        "heavy": 4,
+        "fl": {
+         "savoury": 3,
+         "sweet": 0,
+         "salty": 3,
+         "spicy": 0,
+         "sour": 0
+        },
+        "diet": [],
+        "has": [
+         "chicken",
+         "egg",
+         "dairy"
+        ],
+        "tint": "#f0ece2",
+        "tintD": "#2b271c",
+        "id": "d14",
+        "court": "frontier",
+        "courtName": "Frontier",
+        "walk": 8,
+        "stall": "Asia Wok",
+        "cat": "Rice"
+       }
+      ]
+     },
+     {
+      "name": "Fried noodles",
+      "items": [
+       {
+        "name": "Fried Beef Hor Fun",
+        "price": 5,
+        "prep": 11,
+        "icon": "🍜",
+        "desc": "Flat rice noodles wok-fried with beef and gravy.",
+        "cuisine": "Chinese",
+        "form": "noodles",
+        "tex": [
+         "dry"
+        ],
+        "temp": "hot",
+        "heavy": 4,
+        "fl": {
+         "savoury": 3,
+         "sweet": 0,
+         "salty": 2,
+         "spicy": 0,
+         "sour": 0
+        },
+        "diet": [],
+        "has": [
+         "beef",
+         "soy"
+        ],
+        "tint": "#efeae3",
+        "tintD": "#2a251d",
+        "id": "d15",
+        "court": "frontier",
+        "courtName": "Frontier",
+        "walk": 8,
+        "stall": "Asia Wok",
+        "cat": "Fried noodles"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "name": "Chinese Noodles",
+    "cuisine": "Chinese",
+    "cats": [
+     {
+      "name": "Noodles",
+      "items": [
+       {
+        "name": "Wanton Noodles",
+        "price": 2.3,
+        "prep": 6,
+        "icon": "🍜",
+        "desc": "Springy egg noodles, char siew, wanton on the side.",
+        "cuisine": "Chinese",
+        "form": "noodles",
+        "tex": [
+         "dry"
+        ],
+        "temp": "hot",
+        "heavy": 3,
+        "fl": {
+         "savoury": 2,
+         "sweet": 0,
+         "salty": 2,
+         "spicy": 0,
+         "sour": 0
+        },
+        "diet": [],
+        "has": [
+         "pork",
+         "egg",
+         "gluten"
+        ],
+        "tint": "#efeae3",
+        "tintD": "#2a251d",
+        "id": "d16",
+        "court": "frontier",
+        "courtName": "Frontier",
+        "walk": 8,
+        "stall": "Chinese Noodles",
+        "cat": "Noodles"
+       },
+       {
+        "name": "Dumpling Noodle Soup",
+        "price": 2.8,
+        "prep": 7,
+        "icon": "🥟",
+        "desc": "Noodles and dumplings in clear soup.",
+        "cuisine": "Chinese",
+        "form": "noodles",
+        "tex": [
+         "soupy"
+        ],
+        "temp": "hot",
+        "heavy": 2,
+        "fl": {
+         "savoury": 2,
+         "sweet": 0,
+         "salty": 2,
+         "spicy": 0,
+         "sour": 0
+        },
+        "diet": [],
+        "has": [
+         "pork",
+         "gluten"
+        ],
+        "tint": "#e8eef1",
+        "tintD": "#1b262b",
+        "id": "d17",
+        "court": "frontier",
+        "courtName": "Frontier",
+        "walk": 8,
+        "stall": "Chinese Noodles",
+        "cat": "Noodles"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "name": "Mixed Vegetable Rice",
+    "cuisine": "Chinese",
+    "cats": [
+     {
+      "name": "Economic rice",
+      "items": [
+       {
+        "name": "Rice + 3 Dishes",
+        "price": 3.5,
+        "prep": 4,
+        "icon": "🍱",
+        "desc": "Point at what you want. Vegetarian picks available.",
+        "cuisine": "Chinese",
+        "form": "rice",
+        "tex": [
+         "dry"
+        ],
+        "temp": "hot",
+        "heavy": 3,
+        "fl": {
+         "savoury": 2,
+         "sweet": 0,
+         "salty": 2,
+         "spicy": 0,
+         "sour": 0
+        },
+        "diet": [
+         "vegetarian"
+        ],
+        "has": [
+         "soy"
+        ],
+        "tint": "#e7eee7",
+        "tintD": "#1b2a1e",
+        "id": "d18",
+        "court": "frontier",
+        "courtName": "Frontier",
+        "walk": 8,
+        "stall": "Mixed Vegetable Rice",
+        "cat": "Economic rice"
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "techno",
+  "name": "Techno Edge",
+  "loc": "CDE · E2",
+  "walk": 11,
+  "live": true,
+  "stalls": [
+   {
+    "name": "Kaneda Japanese Cuisine",
+    "cuisine": "Japanese",
+    "cats": [
+     {
+      "name": "Fried",
+      "items": [
+       {
+        "name": "Fried Chicken Tama",
+        "price": 4,
+        "prep": 9,
+        "icon": "🍗",
+        "desc": "Japanese fried chicken with egg over rice.",
+        "cuisine": "Japanese",
+        "form": "rice",
+        "tex": [
+         "crispy"
+        ],
+        "temp": "hot",
+        "heavy": 4,
+        "fl": {
+         "savoury": 3,
+         "sweet": 0,
+         "salty": 2,
+         "spicy": 0,
+         "sour": 0
+        },
+        "diet": [],
+        "has": [
+         "chicken",
+         "egg",
+         "gluten"
+        ],
+        "tint": "#e8efe9",
+        "tintD": "#1d2b24",
+        "id": "d19",
+        "court": "techno",
+        "courtName": "Techno Edge",
+        "walk": 11,
+        "stall": "Kaneda Japanese Cuisine",
+        "cat": "Fried"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "name": "Hougang Fishball Noodles",
+    "cuisine": "Chinese",
+    "cats": [
+     {
+      "name": "Noodles",
+      "items": [
+       {
+        "name": "Fishball Minced Meat Noodles",
+        "price": 2.8,
+        "prep": 6,
+        "icon": "🍜",
+        "desc": "Dry or soup, with fishballs and minced pork.",
+        "cuisine": "Chinese",
+        "form": "noodles",
+        "tex": [
+         "dry"
+        ],
+        "temp": "hot",
+        "heavy": 2,
+        "fl": {
+         "savoury": 2,
+         "sweet": 0,
+         "salty": 2,
+         "spicy": 0,
+         "sour": 0
+        },
+        "diet": [],
+        "has": [
+         "pork",
+         "fish",
+         "gluten"
+        ],
+        "tint": "#efeae3",
+        "tintD": "#2a251d",
+        "id": "d20",
+        "court": "techno",
+        "courtName": "Techno Edge",
+        "walk": 11,
+        "stall": "Hougang Fishball Noodles",
+        "cat": "Noodles"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "name": "Western Food",
+    "cuisine": "Western",
+    "cats": [
+     {
+      "name": "Grills",
+      "items": [
+       {
+        "name": "Black Pepper Chicken Chop",
+        "price": 3.2,
+        "prep": 10,
+        "icon": "🍽️",
+        "desc": "Grilled chicken chop, fries and coleslaw.",
+        "cuisine": "Western",
+        "form": "rice",
+        "tex": [
+         "dry"
+        ],
+        "temp": "hot",
+        "heavy": 4,
+        "fl": {
+         "savoury": 3,
+         "sweet": 0,
+         "salty": 2,
+         "spicy": 1,
+         "sour": 0
+        },
+        "diet": [
+         "halal"
+        ],
+        "has": [
+         "chicken"
+        ],
+        "tint": "#f0ece2",
+        "tintD": "#2b271c",
+        "id": "d21",
+        "court": "techno",
+        "courtName": "Techno Edge",
+        "walk": 11,
+        "stall": "Western Food",
+        "cat": "Grills"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "name": "Indonesian Panggang",
+    "cuisine": "Indonesian",
+    "cats": [
+     {
+      "name": "Grilled",
+      "items": [
+       {
+        "name": "Ayam Panggang with Rice",
+        "price": 3.5,
+        "prep": 9,
+        "icon": "🔥",
+        "desc": "Charcoal-grilled chicken with sambal and rice.",
+        "cuisine": "Indonesian",
+        "form": "rice",
+        "tex": [
+         "dry"
+        ],
+        "temp": "hot",
+        "heavy": 3,
+        "fl": {
+         "savoury": 3,
+         "sweet": 0,
+         "salty": 2,
+         "spicy": 2,
+         "sour": 0
+        },
+        "diet": [
+         "halal"
+        ],
+        "has": [
+         "chicken"
+        ],
+        "tint": "#f2e8e4",
+        "tintD": "#2e211d",
+        "id": "d22",
+        "court": "techno",
+        "courtName": "Techno Edge",
+        "walk": 11,
+        "stall": "Indonesian Panggang",
+        "cat": "Grilled"
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "yih",
+  "name": "Central Square",
+  "loc": "Yusof Ishak House",
+  "walk": 7,
+  "live": true,
+  "stalls": [
+   {
+    "name": "TempuRamen",
+    "cuisine": "Japanese",
+    "cats": [
+     {
+      "name": "Ramen & udon",
+      "items": [
+       {
+        "name": "Mazesoba",
+        "price": 5.8,
+        "prep": 9,
+        "icon": "🍜",
+        "desc": "Brothless mixed noodles with minced meat and egg.",
+        "cuisine": "Japanese",
+        "form": "noodles",
+        "tex": [
+         "dry"
+        ],
+        "temp": "hot",
+        "heavy": 4,
+        "fl": {
+         "savoury": 3,
+         "sweet": 0,
+         "salty": 3,
+         "spicy": 0,
+         "sour": 0
+        },
+        "diet": [],
+        "has": [
+         "pork",
+         "egg",
+         "gluten"
+        ],
+        "tint": "#efeae3",
+        "tintD": "#2a251d",
+        "id": "d23",
+        "court": "yih",
+        "courtName": "Central Square",
+        "walk": 7,
+        "stall": "TempuRamen",
+        "cat": "Ramen & udon"
+       },
+       {
+        "name": "Fire Chicken Ramen",
+        "price": 6.9,
+        "prep": 11,
+        "icon": "🌶️",
+        "desc": "Spicy chicken ramen in a rich broth.",
+        "cuisine": "Japanese",
+        "form": "noodles",
+        "tex": [
+         "soupy"
+        ],
+        "temp": "hot",
+        "heavy": 4,
+        "fl": {
+         "savoury": 3,
+         "sweet": 0,
+         "salty": 2,
+         "spicy": 3,
+         "sour": 0
+        },
+        "diet": [],
+        "has": [
+         "chicken",
+         "egg",
+         "gluten"
+        ],
+        "tint": "#f2e8e4",
+        "tintD": "#2e211d",
+        "id": "d24",
+        "court": "yih",
+        "courtName": "Central Square",
+        "walk": 7,
+        "stall": "TempuRamen",
+        "cat": "Ramen & udon"
+       },
+       {
+        "name": "Creamy Mentaiko Udon",
+        "price": 7.5,
+        "prep": 10,
+        "icon": "🍝",
+        "desc": "Thick udon in creamy cod roe sauce.",
+        "cuisine": "Japanese",
+        "form": "noodles",
+        "tex": [
+         "creamy"
+        ],
+        "temp": "hot",
+        "heavy": 4,
+        "fl": {
+         "savoury": 2,
+         "sweet": 0,
+         "salty": 3,
+         "spicy": 0,
+         "sour": 0
+        },
+        "diet": [],
+        "has": [
+         "fish",
+         "dairy",
+         "gluten"
+        ],
+        "tint": "#f0ece2",
+        "tintD": "#2b271c",
+        "id": "d25",
+        "court": "yih",
+        "courtName": "Central Square",
+        "walk": 7,
+        "stall": "TempuRamen",
+        "cat": "Ramen & udon"
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "utown",
+  "name": "UTown Food Clique",
+  "loc": "University Town",
+  "walk": 14,
+  "live": true,
+  "stalls": [
+   {
+    "name": "Hwang's Korean",
+    "cuisine": "Korean",
+    "cats": [
+     {
+      "name": "Rice bowls",
+      "items": [
+       {
+        "name": "Bibimbap",
+        "price": 6.6,
+        "prep": 9,
+        "icon": "🥗",
+        "desc": "Rice with seasoned vegetables, egg and gochujang.",
+        "cuisine": "Korean",
+        "form": "rice",
+        "tex": [
+         "dry"
+        ],
+        "temp": "hot",
+        "heavy": 3,
+        "fl": {
+         "savoury": 3,
+         "sweet": 0,
+         "salty": 2,
+         "spicy": 2,
+         "sour": 0
+        },
+        "diet": [
+         "vegetarian"
+        ],
+        "has": [
+         "egg",
+         "soy"
+        ],
+        "tint": "#e7eee7",
+        "tintD": "#1b2a1e",
+        "id": "d26",
+        "court": "utown",
+        "courtName": "UTown Food Clique",
+        "walk": 14,
+        "stall": "Hwang's Korean",
+        "cat": "Rice bowls"
+       }
+      ]
+     },
+     {
+      "name": "Soups",
+      "items": [
+       {
+        "name": "Samgyetang",
+        "price": 8.3,
+        "prep": 14,
+        "icon": "🍲",
+        "desc": "Whole young chicken in ginseng broth.",
+        "cuisine": "Korean",
+        "form": "rice",
+        "tex": [
+         "soupy"
+        ],
+        "temp": "hot",
+        "heavy": 3,
+        "fl": {
+         "savoury": 2,
+         "sweet": 0,
+         "salty": 2,
+         "spicy": 0,
+         "sour": 0
+        },
+        "diet": [
+         "halal"
+        ],
+        "has": [
+         "chicken"
+        ],
+        "tint": "#e8eef1",
+        "tintD": "#1b262b",
+        "id": "d27",
+        "court": "utown",
+        "courtName": "UTown Food Clique",
+        "walk": 14,
+        "stall": "Hwang's Korean",
+        "cat": "Soups"
+       }
+      ]
+     },
+     {
+      "name": "Snacks",
+      "items": [
+       {
+        "name": "Tteokbokki",
+        "price": 4,
+        "prep": 7,
+        "icon": "🌶️",
+        "desc": "Chewy rice cakes in sweet-spicy sauce.",
+        "cuisine": "Korean",
+        "form": "noodles",
+        "tex": [
+         "chewy"
+        ],
+        "temp": "hot",
+        "heavy": 3,
+        "fl": {
+         "savoury": 2,
+         "sweet": 2,
+         "salty": 2,
+         "spicy": 3,
+         "sour": 0
+        },
+        "diet": [
+         "vegetarian"
+        ],
+        "has": [
+         "gluten",
+         "soy"
+        ],
+        "tint": "#f2e8e4",
+        "tintD": "#2e211d",
+        "id": "d28",
+        "court": "utown",
+        "courtName": "UTown Food Clique",
+        "walk": 14,
+        "stall": "Hwang's Korean",
+        "cat": "Snacks"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "name": "Astons Express",
+    "cuisine": "Western",
+    "cats": [
+     {
+      "name": "Grills",
+      "items": [
+       {
+        "name": "Chargrill Chicken + 2 Sides",
+        "price": 6.9,
+        "prep": 12,
+        "icon": "🍗",
+        "desc": "Grilled chicken breast with two sides.",
+        "cuisine": "Western",
+        "form": "rice",
+        "tex": [
+         "dry"
+        ],
+        "temp": "hot",
+        "heavy": 3,
+        "fl": {
+         "savoury": 3,
+         "sweet": 0,
+         "salty": 2,
+         "spicy": 0,
+         "sour": 0
+        },
+        "diet": [
+         "halal"
+        ],
+        "has": [
+         "chicken"
+        ],
+        "tint": "#f0ece2",
+        "tintD": "#2b271c",
+        "id": "d29",
+        "court": "utown",
+        "courtName": "UTown Food Clique",
+        "walk": 14,
+        "stall": "Astons Express",
+        "cat": "Grills"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "name": "Indian Food",
+    "cuisine": "Indian",
+    "cats": [
+     {
+      "name": "Prata",
+      "items": [
+       {
+        "name": "Mushroom Prata",
+        "price": 3.3,
+        "prep": 7,
+        "icon": "🥞",
+        "desc": "Crisp flatbread with mushrooms and curry.",
+        "cuisine": "Indian",
+        "form": "bread",
+        "tex": [
+         "crispy"
+        ],
+        "temp": "hot",
+        "heavy": 3,
+        "fl": {
+         "savoury": 2,
+         "sweet": 0,
+         "salty": 2,
+         "spicy": 0,
+         "sour": 0
+        },
+        "diet": [
+         "vegetarian",
+         "halal"
+        ],
+        "has": [
+         "gluten",
+         "dairy"
+        ],
+        "tint": "#eeeade",
+        "tintD": "#292418",
+        "id": "d30",
+        "court": "utown",
+        "courtName": "UTown Food Clique",
+        "walk": 14,
+        "stall": "Indian Food",
+        "cat": "Prata"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "name": "Udon Don Bar",
+    "cuisine": "Japanese",
+    "cats": [
+     {
+      "name": "Udon",
+      "items": [
+       {
+        "name": "Beef Udon",
+        "price": 8.9,
+        "prep": 10,
+        "icon": "🍜",
+        "desc": "Thick udon in dashi broth with sliced beef.",
+        "cuisine": "Japanese",
+        "form": "noodles",
+        "tex": [
+         "soupy"
+        ],
+        "temp": "hot",
+        "heavy": 3,
+        "fl": {
+         "savoury": 3,
+         "sweet": 0,
+         "salty": 2,
+         "spicy": 0,
+         "sour": 0
+        },
+        "diet": [],
+        "has": [
+         "beef",
+         "gluten",
+         "fish"
+        ],
+        "tint": "#efeae3",
+        "tintD": "#2a251d",
+        "id": "d31",
+        "court": "utown",
+        "courtName": "UTown Food Clique",
+        "walk": 14,
+        "stall": "Udon Don Bar",
+        "cat": "Udon"
+       }
+      ]
+     },
+     {
+      "name": "Donburi",
+      "items": [
+       {
+        "name": "Salted Egg Chicken Donburi",
+        "price": 9.5,
+        "prep": 11,
+        "icon": "🍱",
+        "desc": "Fried chicken in salted egg sauce over rice.",
+        "cuisine": "Japanese",
+        "form": "rice",
+        "tex": [
+         "crispy",
+         "creamy"
+        ],
+        "temp": "hot",
+        "heavy": 5,
+        "fl": {
+         "savoury": 2,
+         "sweet": 0,
+         "salty": 3,
+         "spicy": 0,
+         "sour": 0
+        },
+        "diet": [],
+        "has": [
+         "chicken",
+         "egg",
+         "dairy"
+        ],
+        "tint": "#f0ece2",
+        "tintD": "#2b271c",
+        "id": "d32",
+        "court": "utown",
+        "courtName": "UTown Food Clique",
+        "walk": 14,
+        "stall": "Udon Don Bar",
+        "cat": "Donburi"
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "pgp",
+  "name": "PGP Canteen",
+  "loc": "Prince George's Park",
+  "walk": 16,
+  "live": true,
+  "stalls": [
+   {
+    "name": "A Hot Hideout",
+    "cuisine": "Chinese",
+    "cats": [
+     {
+      "name": "Mala",
+      "items": [
+       {
+        "name": "Mala Collagen Soup Base",
+        "price": 2.5,
+        "prep": 10,
+        "icon": "🍲",
+        "desc": "Soup base, then pick ingredients by weight.",
+        "cuisine": "Chinese",
+        "form": "rice",
+        "tex": [
+         "soupy"
+        ],
+        "temp": "hot",
+        "heavy": 3,
+        "fl": {
+         "savoury": 2,
+         "sweet": 0,
+         "salty": 3,
+         "spicy": 3,
+         "sour": 0
+        },
+        "diet": [],
+        "has": [
+         "soy"
+        ],
+        "tint": "#f2e8e4",
+        "tintD": "#2e211d",
+        "id": "d33",
+        "court": "pgp",
+        "courtName": "PGP Canteen",
+        "walk": 16,
+        "stall": "A Hot Hideout",
+        "cat": "Mala"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "name": "The Acai Truck",
+    "cuisine": "Western",
+    "cats": [
+     {
+      "name": "Bowls",
+      "items": [
+       {
+        "name": "Nutty Truck Acai Bowl",
+        "price": 5.4,
+        "prep": 4,
+        "icon": "🫐",
+        "desc": "Acai with granola, banana and peanut butter.",
+        "cuisine": "Western",
+        "form": "drink",
+        "tex": [
+         "creamy"
+        ],
+        "temp": "cold",
+        "heavy": 1,
+        "fl": {
+         "savoury": 2,
+         "sweet": 3,
+         "salty": 2,
+         "spicy": 0,
+         "sour": 0
+        },
+        "diet": [
+         "vegetarian",
+         "vegan",
+         "halal"
+        ],
+        "has": [
+         "nuts"
+        ],
+        "tint": "#efe8f0",
+        "tintD": "#241d2a",
+        "id": "d34",
+        "court": "pgp",
+        "courtName": "PGP Canteen",
+        "walk": 16,
+        "stall": "The Acai Truck",
+        "cat": "Bowls"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "name": "Tai Feng Wei",
+    "cuisine": "Taiwanese",
+    "cats": [
+     {
+      "name": "Rice boxes",
+      "items": [
+       {
+        "name": "Taiwan Popcorn Chicken Rice Box",
+        "price": 4.5,
+        "prep": 8,
+        "icon": "🍱",
+        "desc": "Crisp popcorn chicken with rice and pickles.",
+        "cuisine": "Taiwanese",
+        "form": "rice",
+        "tex": [
+         "crispy"
+        ],
+        "temp": "hot",
+        "heavy": 4,
+        "fl": {
+         "savoury": 3,
+         "sweet": 0,
+         "salty": 3,
+         "spicy": 0,
+         "sour": 0
+        },
+        "diet": [],
+        "has": [
+         "chicken",
+         "gluten"
+        ],
+        "tint": "#f0ece2",
+        "tintD": "#2b271c",
+        "id": "d35",
+        "court": "pgp",
+        "courtName": "PGP Canteen",
+        "walk": 16,
+        "stall": "Tai Feng Wei",
+        "cat": "Rice boxes"
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ }
+]
