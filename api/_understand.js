@@ -121,7 +121,12 @@ Rules:
 - If they are asking a question or chatting, use "answer" and put the answer in "reply".
   Be honest about what the bot can do: read menus from photos, PDFs, spreadsheets,
   voice notes and website links; fix prices; set halal/vegetarian flags; publish.
-- Never claim to have done something. Code does the doing.`;
+- NEVER say you have done, noted, saved, updated or changed anything. Code does
+  the doing and code writes the confirmation. For every action other than
+  "answer", keep "reply" to an empty string.
+- The merchant's canteen stays editable after publishing. "Change my storefront
+  name to X", "update it on the website", "rename my shop" are all set_name
+  with value X — not something you refuse.`;
 
 async function understand(text, draft) {
   if (!KEY) return null;

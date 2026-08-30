@@ -523,17 +523,29 @@ async function handle(u) {
     catch (e) { console.error('[understand]', e.message); }
 
     if (act) {
-      if (act.action === 'set_name' && act.value && draft) {
-        draft.name = act.value; draft.awaiting = null;
-        await store.setDraft(chat, draft);
-        await say(chat, act.reply || `Got it — <b>${esc(draft.name)}</b>.`);
-        return review(chat, draft);
+      if (act.action === 'set_name' && act.value) {
+        if (draft) {
+          draft.name = act.value; draft.awaiting = null;
+          await store.setDraft(chat, draft);
+          await say(chat, `Got it — <b>${esc(draft.name)}</b>.`);
+          return review(chat, draft);
+        }
+        const c = await renamePublished(chat, act.value);
+        return say(chat, c
+          ? `✏️ Renamed to <b>${esc(c.name)}</b>. That's live in the storefront now — refresh the page and you'll see it.`
+          : 'You haven\'t published a canteen yet, so there\'s no name to change. Send me a menu and we\'ll start one.',
+          c ? keyboard([[{ text: '🔗 See it in the storefront', url: SITE }]]) : {});
       }
-      if (act.action === 'set_location' && act.value && draft) {
-        draft.loc = act.value; draft.awaiting = null;
-        await store.setDraft(chat, draft);
-        await say(chat, act.reply || `📍 <b>${esc(draft.loc)}</b>.`, dropKeyboard);
-        return review(chat, draft);
+      if (act.action === 'set_location' && act.value) {
+        if (draft) {
+          draft.loc = act.value; draft.awaiting = null;
+          await store.setDraft(chat, draft);
+          await say(chat, `📍 <b>${esc(draft.loc)}</b>.`, dropKeyboard);
+          return review(chat, draft);
+        }
+        const c = await relocatePublished(chat, act.value);
+        return say(chat, c ? `📍 Moved <b>${esc(c.name)}</b> to <b>${esc(c.loc)}</b> — live now.`
+                           : 'No published canteen to move yet.');
       }
       if (draft && (act.action === 'set_prices' || act.action === 'add_items') && (act.prices.length || act.items.length)) {
         const { set, changed, unmatched } = brain.applyPairs(draft, act.prices);
@@ -542,13 +554,13 @@ async function handle(u) {
         const bits = [];
         if (set.length || changed.length) bits.push(`updated ${set.length + changed.length}`);
         if (added) bits.push(`added ${added}`);
-        await say(chat, act.reply || (bits.length ? `Done — ${bits.join(', ')}.` : 'Nothing to change there.'));
+        await say(chat, bits.length ? `Done — ${bits.join(', ')}.` : 'I couldn\'t match any of those to this menu.');
         return review(chat, draft);
       }
       if (draft && act.action === 'remove_items' && act.remove.length) {
         const gone = removeItems(draft, act.remove);
         await store.setDraft(chat, draft);
-        await say(chat, act.reply || (gone ? `Removed ${gone}.` : 'I couldn\'t find those.'));
+        await say(chat, gone ? `Removed ${gone} dish${gone === 1 ? '' : 'es'}.` : 'I couldn\'t find those on this menu.');
         return review(chat, draft);
       }
       if (draft && act.action === 'rename' && act.rename.length) {
@@ -558,7 +570,7 @@ async function handle(u) {
           if (d) { d.name = r.to; n++; }
         }
         await store.setDraft(chat, draft);
-        await say(chat, act.reply || (n ? `Renamed ${n}.` : 'I couldn\'t find that one.'));
+        await say(chat, n ? `Renamed ${n} dish${n === 1 ? '' : 'es'}.` : 'I couldn\'t find that one on this menu.');
         return review(chat, draft);
       }
       if (act.reply) {
@@ -744,6 +756,25 @@ async function courtForChat(chat) {
 /* ── the flags the model is not allowed to guess ───────────────────────
    This is the merchant confirming, by hand, the two things a wrong answer
    would actually hurt someone over. */
+/* A merchant who has published still owns their canteen. "Change my storefront
+   name" must reach the live catalog, not just a draft that no longer exists. */
+async function renamePublished(chat, name) {
+  const c = await courtForChat(chat);
+  if (!c) return null;
+  c.name = name;
+  for (const i of courtItems(c)) i.courtName = name;   /* dish cards carry the canteen name */
+  await store.publish(c);
+  return c;
+}
+
+async function relocatePublished(chat, loc) {
+  const c = await courtForChat(chat);
+  if (!c) return null;
+  c.loc = loc;
+  await store.publish(c);
+  return c;
+}
+
 async function dietList(chat) {
   const c = await courtForChat(chat);
   if (!c) return say(chat, 'Nothing published yet. Send me a photo of your menu board first, then publish it — I\'ll ask you about diets after.');
