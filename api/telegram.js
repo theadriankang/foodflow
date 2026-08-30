@@ -181,11 +181,17 @@ const HOW_IT_WORKS =
   '2. I read it and show you a list to check.\n' +
   '3. You fix anything that\'s wrong by tapping or typing.\n' +
   '4. You publish — and customers can order it straight away.\n\n' +
-  'I won\'t guess prices, and I won\'t guess halal or vegetarian. Those are yours to confirm.';
+  'I won\'t guess prices, and I won\'t guess halal or vegetarian. Those are yours to confirm.\n\n' +
+  'A photo works, so does a PDF, a spreadsheet, a voice note, or a link to your website.';
 
 const PASTE_HELP =
   'No problem — type or paste your menu, one dish per line, with the price at the end:\n\n' +
   '<code>Wanton Mee 4.00\nDumpling Soup 4.50\nTeh Tarik 1.60</code>';
+
+const LINK_HELP =
+  'Send me the link and I\'ll read it — the menu page itself if you have one:\n\n' +
+  '<code>https://yourshop.com/menu</code>\n\n' +
+  'A PDF menu link works too. If the page draws its menu as a picture I\'ll tell you, and a screenshot will do.';
 
 const ASK_PHOTO =
   'Send me a <b>photo of your menu board</b> and I\'ll type it up for you.\n\n' +
@@ -236,6 +242,7 @@ async function handle(u) {
     if (q.data === 'back')    return d ? review(chat, d) : say(chat, ASK_PHOTO);
     if (q.data === 'howto')   return say(chat, HOW_IT_WORKS);
     if (q.data === 'astext')  return say(chat, PASTE_HELP);
+    if (q.data === 'aslink')  return say(chat, LINK_HELP);
 
     if (q.data === 'skiploc') {
       if (!d) return say(chat, ASK_PHOTO);
@@ -293,8 +300,9 @@ async function handle(u) {
       '👋 I put your stall on <b>FoodFlow</b>, so customers can find and pay for your food by just asking for it.\n\n' +
       'No website needed. No forms.\n\n' + ASK_PHOTO,
       keyboard([
-        [{ text: '✍️ I\'d rather type it out', callback_data: 'astext' }],
-        [{ text: '❓ How does this work?',      callback_data: 'howto' }]
+        [{ text: '🔗 My menu is on a website', callback_data: 'aslink' }],
+        [{ text: '✍️ I\'d rather type it out',  callback_data: 'astext' }],
+        [{ text: '❓ How does this work?',       callback_data: 'howto' }]
       ]));
   }
   if (/^\/(new|reset)/.test(text)) { await store.clearDraft(chat); return say(chat, ASK_PHOTO); }
@@ -406,6 +414,42 @@ async function handle(u) {
       await say(chat, `Set <b>${esc(hit.name)}</b> to ${money(val)}.`);
       return review(chat, draft);
     }
+  }
+
+  /* a link to a menu the merchant already publishes */
+  const link = intake.findUrl(text);
+  if (link) {
+    await tg('sendChatAction', { chat_id: chat, action: 'typing' });
+    await say(chat, '🔗 Opening that…');
+    let got2;
+    try { got2 = await intake.fromUrl(link); }
+    catch (e) { console.error('[url]', e.message); got2 = { text: '', note: 'I couldn\'t open that link.' }; }
+    if (!got2.text) return say(chat, got2.note);
+
+    await say(chat, got2.note);
+    let read2;
+    try { read2 = await vision.readMenuText(got2.text); }
+    catch (e) { console.error('[read]', e.message); return say(chat, '😕 I found the page but couldn\'t make a menu out of it. A screenshot works too.'); }
+    if (!read2.categories.length)
+      return say(chat, 'I opened it but couldn\'t find dishes and prices there. If the menu is on a different page, send me that link — or just send a screenshot.');
+
+    draft = draft || { name: null, loc: null, walk: 10, stalls: [], awaiting: null };
+    if (!draft.name && read2.canteen) draft.name = read2.canteen;
+    const sName = read2.stall || draft.stalls[0]?.name || 'Main stall';
+    let st = draft.stalls.find(x => x.name.toLowerCase() === sName.toLowerCase());
+    if (!st) { st = { name: sName, categories: [] }; draft.stalls.push(st); }
+    for (const c of read2.categories) {
+      const ex = st.categories.find(x => (x.name || '') === (c.name || ''));
+      if (ex) ex.items.push(...c.items); else st.categories.push(c);
+    }
+    if (!draft.name) {
+      draft.awaiting = 'name';
+      await store.setDraft(chat, draft);
+      return say(chat, renderTree({ ...draft, name: 'Your canteen' }) + '\n\n<b>What\'s this canteen or coffee shop called?</b>');
+    }
+    draft.awaiting = null;
+    await store.setDraft(chat, draft);
+    return review(chat, draft);
   }
 
   /* menu pasted as text still works */

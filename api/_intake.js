@@ -101,6 +101,132 @@ async function transcribe({ buf, path }) {
 
 const TEXTY = /\.(txt|csv|tsv|md|json)$/i;
 
+/* ── a link to the menu the merchant already publishes ─────────────────
+   Plenty of shops do have a website; what they don't have is any way to hand
+   it to an agent. Pasting the URL is the least work a merchant can possibly
+   do, so it should work. */
+const URL_RE = /\bhttps?:\/\/[^\s<>"')]+/i;
+const findUrl = t => (String(t || '').match(URL_RE) || [null])[0];
+
+/* Fetching a URL a stranger supplies is a request forgery risk: keep it to
+   public http(s) and refuse anything pointing back inside the network. */
+const PRIVATE = /^(localhost$|127\.|10\.|192\.168\.|169\.254\.|0\.|\[?::1|172\.(1[6-9]|2\d|3[01])\.)/i;
+function safeUrl(raw) {
+  let u;
+  try { u = new URL(raw); } catch { return null; }
+  if (!/^https?:$/.test(u.protocol)) return null;
+  if (PRIVATE.test(u.hostname)) return null;
+  return u;
+}
+
+async function getPage(u, ms = 12000) {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), ms);
+  try {
+    const r = await fetch(u, { redirect: 'follow', signal: ctrl.signal,
+      headers: { 'User-Agent': 'FoodFlowBot/1.0 (+menu import)', Accept: 'text/html,application/pdf,*/*' } });
+    if (!r.ok) throw new Error(`site answered ${r.status}`);
+    const type = (r.headers.get('content-type') || '').toLowerCase();
+    const buf  = Buffer.from((await r.arrayBuffer()).slice(0, 4e6));
+    return { type, buf, url: r.url || String(u) };
+  } finally { clearTimeout(t); }
+}
+
+/* HTML -> the words a human would see. Scripts and styles out, tags out,
+   entities back to characters, blank lines collapsed. */
+function htmlText(html) {
+  let h = html
+    .replace(/<script\b[\s\S]*?<\/script>/gi, ' ')
+    .replace(/<style\b[\s\S]*?<\/style>/gi, ' ')
+    .replace(/<!--[\s\S]*?-->/g, ' ')
+    .replace(/<(br|\/p|\/div|\/li|\/tr|\/h[1-6])[^>]*>/gi, '\n')
+    .replace(/<[^>]+>/g, ' ');
+  h = h.replace(/&nbsp;/gi, ' ').replace(/&amp;/gi, '&').replace(/&quot;/gi, '"')
+       .replace(/&#0?39;|&apos;/gi, "'").replace(/&lt;/gi, '<').replace(/&gt;/gi, '>')
+       .replace(/&#(\d+);/g, (_, d) => String.fromCharCode(+d));
+  return h.split('\n').map(l => l.replace(/[ \t\u00a0]+/g, ' ').trim())
+          .filter(Boolean).join('\n').replace(/\n{3,}/g, '\n\n').trim();
+}
+
+/* Restaurants very often carry schema.org markup that already lists the menu.
+   If it's there it is far cleaner than the rendered text, so hand it over too. */
+function jsonLd(html) {
+  const out = [];
+  const re = /<script[^>]+application\/ld\+json[^>]*>([\s\S]*?)<\/script>/gi;
+  let m;
+  while ((m = re.exec(html)) !== null && out.length < 4) {
+    const t = m[1].trim();
+    if (/menu|offer|hasMenu|MenuItem|price/i.test(t)) out.push(t.slice(0, 4000));
+  }
+  return out.join('\n');
+}
+
+/* Some sites just link to a PDF of the menu. Follow that once. */
+function pdfLink(html, base) {
+  const re = /href\s*=\s*["']([^"']+\.pdf(?:\?[^"']*)?)["']/gi;
+  const hits = [];
+  let m;
+  while ((m = re.exec(html)) !== null) hits.push(m[1]);
+  if (!hits.length) return null;
+  const best = hits.find(h => /menu|food|carte/i.test(h)) || hits[0];
+  try { return new URL(best, base).href; } catch { return null; }
+}
+
+async function fromUrl(raw) {
+  const u = safeUrl(raw);
+  if (!u) {
+    const priv = /^https?:/i.test(raw);
+    return { kind: 'url', images: [], text: '',
+      note: priv ? 'That address points somewhere private, so I won\'t open it. Send me a public link to your menu.'
+                 : 'That doesn\'t look like a web address I can open. It needs to start with <code>http</code>.' };
+  }
+
+  let page;
+  try { page = await getPage(u); }
+  catch (e) {
+    return { kind: 'url', images: [], text: '',
+      note: `I couldn\'t open <b>${u.hostname}</b> (${esc(e.message)}). If the menu is behind a login or loads as a picture, send me a screenshot instead.` };
+  }
+
+  if (/pdf/.test(page.type) || /\.pdf($|\?)/i.test(page.url)) {
+    const text = pdfText(page.buf);
+    if (text.length > 40) return { kind: 'url', images: [], text, note: `🔗 Read the menu PDF from <b>${u.hostname}</b>.` };
+    return { kind: 'url', images: [], text: '',
+      note: `The PDF at <b>${u.hostname}</b> is a scan with no text in it. Send me a screenshot of the menu instead.` };
+  }
+
+  const html = page.buf.toString('utf8');
+  let text = [jsonLd(html), htmlText(html)].filter(Boolean).join('\n\n');
+
+  /* A page is usable when it actually shows prices. Length is a bad test:
+     a hawker menu page is legitimately short, and a JavaScript shell is
+     legitimately long. Count the prices instead. */
+  if (priceCount(text) < 2) {
+    const link = pdfLink(html, page.url);
+    if (link) {
+      try {
+        const p2 = await getPage(link);
+        const t2 = pdfText(p2.buf);
+        if (t2.length > 20) return { kind: 'url', images: [], text: t2, note: `🔗 Found a menu PDF linked from <b>${u.hostname}</b> and read that.` };
+      } catch { /* fall through to the honest answer below */ }
+    }
+    /* long page with numbers on it — let the model look rather than refuse */
+    if (text.length > 400 && /\d/.test(text))
+      return { kind: 'url', images: [], text: text.slice(0, 20000),
+               note: `🔗 Read <b>${u.hostname}</b>. I couldn\'t see clear prices, so check them carefully.` };
+
+    return { kind: 'url', images: [], text: '',
+      note: `I opened <b>${u.hostname}</b> but couldn\'t find menu text on it — a lot of sites draw their menu with JavaScript or as an image, which I can\'t see. Send me a screenshot of the page and I\'ll read that.` };
+  }
+
+  return { kind: 'url', images: [], text: text.slice(0, 20000), note: `🔗 Read the menu from <b>${u.hostname}</b>.` };
+}
+
+/* "$8.50", "8.50", "S$4" — two or more of these and it's a menu, not a shell page. */
+const priceCount = t => (String(t).match(/(?:S?\$\s?\d+(?:[.,]\d{1,2})?)|(?:\b\d+[.,]\d{2}\b)/g) || []).length;
+
+const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
 /* ── the one entry point ──────────────────────────────────────────────
    Returns { kind, images[], text, note } — note is anything the merchant
    should be told about how we read it, so nothing happens silently. */
@@ -154,4 +280,4 @@ async function intake(m) {
   return null;   /* not an attachment — the caller handles plain text */
 }
 
-module.exports = { intake, pdfText, textOps };
+module.exports = { intake, fromUrl, findUrl, pdfText, textOps, htmlText, jsonLd, pdfLink, safeUrl };
