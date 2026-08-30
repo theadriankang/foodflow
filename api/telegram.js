@@ -39,6 +39,19 @@ const say = (chat, text, extra = {}) =>
 
 const keyboard = rows => ({ reply_markup: { inline_keyboard: rows } });
 
+/* Where the storefront lives, so the bot can hand the merchant a link they can tap. */
+const SITE = (process.env.PUBLIC_BASE_URL || 'https://lifehacks-foodflow.vercel.app').replace(/\/$/, '');
+
+/* Telegram's native ☰ menu, next to the input box. A merchant should never have to
+   remember a command — registered once by hitting GET /api/telegram?setup=1. */
+const COMMANDS = [
+  { command: 'start', description: 'What this bot does' },
+  { command: 'menu',  description: 'Show what I have so far' },
+  { command: 'diet',  description: 'Set halal / vegetarian flags' },
+  { command: 'new',   description: 'Start over from scratch' },
+  { command: 'help',  description: 'How to send a menu' }
+];
+
 async function photoAsDataUrl(fileId) {
   const f = await tg('getFile', { file_id: fileId });
   if (!f?.file_path) throw new Error('could not fetch the photo');
@@ -77,7 +90,7 @@ function renderTree(d) {
   const noPrice = allItems(d).filter(i => i.price == null).length;
   L.push(`${d.stalls.length} stall${d.stalls.length > 1 ? 's' : ''} · ${items} dish${items === 1 ? '' : 'es'}` +
          (noPrice ? ` · <b>${noPrice} missing a price</b>` : ''));
-  if (noPrice) L.push(`<i>Send me the missing prices as “dish name 4.50”, or publish and fix them later.</i>`);
+  if (noPrice) L.push(`<i>Tap “Add the missing price${noPrice > 1 ? 's' : ''}” below, or publish now and fix them later.</i>`);
   return L.join('\n');
 }
 const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
@@ -161,13 +174,33 @@ async function publishDraft(d) {
   return { court, n };
 }
 
+const HOW_IT_WORKS =
+  '<b>How this works</b>\n\n' +
+  '1. You send a photo of your menu board.\n' +
+  '2. I read it and show you a list to check.\n' +
+  '3. You fix anything that\'s wrong by tapping or typing.\n' +
+  '4. You publish — and customers can order it straight away.\n\n' +
+  'I won\'t guess prices, and I won\'t guess halal or vegetarian. Those are yours to confirm.';
+
+const PASTE_HELP =
+  'No problem — type or paste your menu, one dish per line, with the price at the end:\n\n' +
+  '<code>Wanton Mee 4.00\nDumpling Soup 4.50\nTeh Tarik 1.60</code>';
+
 const ASK_PHOTO =
   'Send me a <b>photo of your menu board</b> and I\'ll type it up for you.\n\n' +
   'Snap it straight on if you can. Several photos are fine — send them one at a time.';
 
 /* ── the conversation ─────────────────────────────────────────────────── */
 module.exports = async (req, res) => {
-  if (req.method !== 'POST') return res.status(200).json({ ok: true, bot: Boolean(TOKEN) });
+  if (req.method !== 'POST') {
+    /* One-time setup: registers the ☰ command menu with Telegram. Safe to re-run. */
+    if (/[?&]setup=1(&|$)/.test(req.url || '') && TOKEN) {
+      const done = await tg('setMyCommands', { commands: COMMANDS });
+      return res.status(200).json({ ok: true, commandsRegistered: done === true,
+        commands: COMMANDS.map(c => '/' + c.command) });
+    }
+    return res.status(200).json({ ok: true, bot: Boolean(TOKEN) });
+  }
   if (!TOKEN) return res.status(200).json({ ok: false, reason: 'TELEGRAM_BOT_TOKEN not set' });
   if (SECRET && req.headers['x-telegram-bot-api-secret-token'] !== SECRET)
     return res.status(401).json({ ok: false });
@@ -199,17 +232,51 @@ async function handle(u) {
 
     if (q.data === 'more') return say(chat, 'Send the next photo.');
     if (q.data === 'restart') { await store.clearDraft(chat); return say(chat, ASK_PHOTO); }
+    if (q.data === 'back')    return d ? review(chat, d) : say(chat, ASK_PHOTO);
+    if (q.data === 'howto')   return say(chat, HOW_IT_WORKS);
+    if (q.data === 'astext')  return say(chat, PASTE_HELP);
+
+    if (q.data === 'skiploc') {
+      if (!d) return say(chat, ASK_PHOTO);
+      d.awaiting = null; await store.setDraft(chat, d);
+      return review(chat, d);
+    }
+    if (q.data === 'fixprices') return d ? priceList(chat, d) : say(chat, ASK_PHOTO);
+    if (q.data.startsWith('p:')) {
+      if (!d) return say(chat, ASK_PHOTO);
+      const [, si, ci, ii] = q.data.split(':').map(Number);
+      const item = d.stalls[si]?.categories[ci]?.items[ii];
+      if (!item) return priceList(chat, d);
+      d.awaiting = 'price'; d.priceAt = [si, ci, ii];
+      await store.setDraft(chat, d);
+      return say(chat, `How much is <b>${esc(item.name)}</b>? Just send the number — e.g. <code>1.60</code>`);
+    }
+
+    if (q.data === 'diet')     return dietList(chat);
+    if (q.data === 'dietdone') return say(chat, '👍 Saved. Customers see those flags straight away, and the food agent filters on them.');
+    if (q.data.startsWith('df:')) return dietDish(chat, q.data.slice(3));
+    if (q.data.startsWith('ds:')) {
+      const [, id, flag] = q.data.split(':');
+      return dietToggle(chat, id, flag);
+    }
+
     if (q.data === 'publish') {
       if (!d || !d.stalls?.length) return say(chat, 'Nothing to publish yet — send me a photo first.');
       const { court, n } = await publishDraft(d);
       await store.clearDraft(chat);
+      await store.set('foodflow:lastcourt:' + chat, court.id);   /* so /diet knows what to edit */
       return say(chat,
         `✅ <b>${esc(court.name)}</b> is live.\n\n` +
         `${court.stalls.length} stall${court.stalls.length > 1 ? 's' : ''}, ${n} dish${n === 1 ? '' : 'es'}. ` +
         `Customers can order from it now, and the food agent can recommend it.\n\n` +
         `ℹ️ I did <b>not</b> guess halal or vegetarian — those are yours to confirm, so nobody is told something wrong about their food. Reply <code>/diet</code> when you want to set them.\n\n` +
         (store.durable ? '' : '<i>Note: this deployment has no database configured, so it lives on the running server only.</i>\n\n') +
-        'Send another photo any time to add more.');
+        'Send another photo any time to add more.',
+        keyboard([
+          [{ text: '🥗 Set halal / vegetarian flags', callback_data: 'diet' }],
+          [{ text: '📸 Add another stall', callback_data: 'more' }],
+          [{ text: '🔗 See it in the storefront', url: SITE }]
+        ]));
     }
     return;
   }
@@ -223,9 +290,24 @@ async function handle(u) {
     await store.clearDraft(chat);
     return say(chat,
       '👋 I put your stall on <b>FoodFlow</b>, so customers can find and pay for your food by just asking for it.\n\n' +
-      'No website needed. No forms.\n\n' + ASK_PHOTO);
+      'No website needed. No forms.\n\n' + ASK_PHOTO,
+      keyboard([
+        [{ text: '✍️ I\'d rather type it out', callback_data: 'astext' }],
+        [{ text: '❓ How does this work?',      callback_data: 'howto' }]
+      ]));
   }
   if (/^\/(new|reset)/.test(text)) { await store.clearDraft(chat); return say(chat, ASK_PHOTO); }
+  if (/^\/diet/.test(text)) return dietList(chat);
+  if (/^\/menu/.test(text)) {
+    const dnow = await store.getDraft(chat);
+    if (dnow?.stalls?.length) return review(chat, dnow);
+    const c = await courtForChat(chat);
+    if (c) return say(chat, `✅ <b>${esc(c.name)}</b> is published and live.`,
+      keyboard([[{ text: '🥗 Set halal / vegetarian flags', callback_data: 'diet' }],
+                [{ text: '📸 Add another stall', callback_data: 'more' }],
+                [{ text: '🔗 See it in the storefront', url: SITE }]]));
+    return say(chat, 'Nothing yet.\n\n' + ASK_PHOTO);
+  }
 
   let draft = await store.getDraft(chat);
 
@@ -275,13 +357,29 @@ async function handle(u) {
   if (draft?.awaiting === 'name' && text) {
     draft.name = text.slice(0, 60); draft.awaiting = 'loc';
     await store.setDraft(chat, draft);
-    return say(chat, 'Got it. <b>Where is it?</b> (e.g. “Frontier, Science”) — or send <b>skip</b>.');
+    return say(chat, 'Got it. <b>Where is it?</b> (e.g. “Frontier, Science”)',
+      keyboard([[{ text: '⏭ Skip this', callback_data: 'skiploc' }]]));
   }
   if (draft?.awaiting === 'loc' && text) {
     if (!/^skip$/i.test(text)) draft.loc = text.slice(0, 60);
     draft.awaiting = null;
     await store.setDraft(chat, draft);
     return review(chat, draft);
+  }
+
+  /* they tapped a dish on the price list, so a bare number is enough */
+  if (draft?.awaiting === 'price' && text) {
+    const num = text.match(/^\$?(\d+(?:[.,]\d{1,2})?)$/);
+    const [si, ci, ii] = draft.priceAt || [];
+    const item = draft.stalls?.[si]?.categories?.[ci]?.items?.[ii];
+    if (num && item) {
+      item.price = Number(num[1].replace(',', '.'));
+      draft.awaiting = null; draft.priceAt = null;
+      await store.setDraft(chat, draft);
+      await say(chat, `Set <b>${esc(item.name)}</b> to ${money(item.price)}.`);
+      return allItems(draft).some(i => i.price == null) ? priceList(chat, draft) : review(chat, draft);
+    }
+    if (!num) return say(chat, 'Just the number, please — like <code>1.60</code>.');
   }
 
   /* "dish name 4.50" fills in a missing price */
@@ -317,12 +415,82 @@ async function handle(u) {
 }
 
 function review(chat, d) {
-  return say(chat, renderTree(d) + '\n\n<b>Look right?</b> Fix anything by telling me, then publish.',
+  const missing = allItems(d).filter(i => i.price == null).length;
+  const rows = [];
+  if (missing) rows.push([{ text: `💲 Add the ${missing} missing price${missing > 1 ? 's' : ''}`, callback_data: 'fixprices' }]);
+  rows.push([{ text: '✅ Publish it', callback_data: 'publish' }]);
+  rows.push([{ text: '📸 Add another photo', callback_data: 'more' },
+             { text: '↩️ Start over', callback_data: 'restart' }]);
+  return say(chat, renderTree(d) + '\n\n<b>Look right?</b> Tap below, or just tell me what to fix.',
+    keyboard(rows));
+}
+
+/* ── missing prices, without making anyone learn a syntax ───────────────
+   Tapping a dish sets it as the thing we're waiting on, so the merchant
+   types "1.60" and nothing else. Typing "teh tarik 1.60" still works. */
+function priceList(chat, d) {
+  const rows = [];
+  d.stalls.forEach((s, si) => s.categories.forEach((c, ci) => c.items.forEach((i, ii) => {
+    if (i.price == null && rows.length < 20)
+      rows.push([{ text: `💲 ${i.name}`.slice(0, 60), callback_data: `p:${si}:${ci}:${ii}` }]);
+  })));
+  if (!rows.length) return review(chat, d);
+  rows.push([{ text: '↩️ Back', callback_data: 'back' }]);
+  return say(chat, '<b>Which one?</b> Tap a dish and send me just the number.', keyboard(rows));
+}
+
+const DIET_ICON = { halal: '☪️', vegan: '🌱', vegetarian: '🥬' };
+const dietMark = i => (i.diet && i.diet.length) ? i.diet.map(d => DIET_ICON[d] || '•').join('') : '▫️';
+const courtItems = c => c.stalls.flatMap(s => s.cats.flatMap(k => k.items));
+
+async function courtForChat(chat) {
+  const id = await store.get('foodflow:lastcourt:' + chat);
+  if (!id) return null;
+  return (await store.getPublished()).find(c => c.id === id) || null;
+}
+
+/* ── the flags the model is not allowed to guess ───────────────────────
+   This is the merchant confirming, by hand, the two things a wrong answer
+   would actually hurt someone over. */
+async function dietList(chat) {
+  const c = await courtForChat(chat);
+  if (!c) return say(chat, 'Nothing published yet. Send me a photo of your menu board first, then publish it — I\'ll ask you about diets after.');
+  const items = courtItems(c).slice(0, 18);
+  if (!items.length) return say(chat, 'That canteen has no priced dishes yet.');
+  return say(chat,
+    `🥗 <b>Dietary flags — ${esc(c.name)}</b>\n\n` +
+    'I never guess these. Halal is a certification, and calling a dish vegetarian when it isn\'t puts food in front of someone who didn\'t want it. So they stay empty until you say.\n\n' +
+    '<b>Tap a dish to set it.</b>',
+    keyboard(items.map(i => [{ text: `${dietMark(i)} ${i.name}`.slice(0, 60), callback_data: 'df:' + i.id }])
+      .concat([[{ text: '✅ Done', callback_data: 'dietdone' }]])));
+}
+
+async function dietDish(chat, itemId) {
+  const c = await courtForChat(chat);
+  const it = c && courtItems(c).find(i => i.id === itemId);
+  if (!it) return dietList(chat);
+  const on = f => (it.diet || []).includes(f) ? '✅' : '▫️';
+  return say(chat, `<b>${esc(it.name)}</b> — ${money(it.price)}\n\nTap to turn a flag on or off.`,
     keyboard([
-      [{ text: '✅ Publish it', callback_data: 'publish' }],
-      [{ text: '📸 Add another photo', callback_data: 'more' },
-       { text: '↩️ Start over', callback_data: 'restart' }]
+      [{ text: `${on('halal')} ☪️ Halal`,           callback_data: `ds:${itemId}:halal` }],
+      [{ text: `${on('vegetarian')} 🥬 Vegetarian`, callback_data: `ds:${itemId}:vegetarian` }],
+      [{ text: `${on('vegan')} 🌱 Vegan`,           callback_data: `ds:${itemId}:vegan` }],
+      [{ text: '↩️ Back to the list',               callback_data: 'diet' }]
     ]));
+}
+
+async function dietToggle(chat, itemId, flag) {
+  const c = await courtForChat(chat);
+  const it = c && courtItems(c).find(i => i.id === itemId);
+  if (!it) return dietList(chat);
+  const set = new Set(it.diet || []);
+  set.has(flag) ? set.delete(flag) : set.add(flag);
+  if (set.has('vegan')) set.add('vegetarian');          /* vegan implies vegetarian */
+  if (!set.has('vegetarian')) set.delete('vegan');
+  it.diet = [...set];
+  it.dietUnset = it.diet.length === 0;
+  await store.publish(c);                                /* replaces the court by id */
+  return dietDish(chat, itemId);
 }
 
 module.exports.renderTree = renderTree;
