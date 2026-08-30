@@ -172,6 +172,58 @@ function pdfLink(html, base) {
   try { return new URL(best, base).href; } catch { return null; }
 }
 
+/* ── a page whose menu IS pictures ────────────────────────────────────
+   Very common: a gallery or carousel of photographed menu boards, which is
+   exactly what the vision model already reads. Pull the image URLs out, rank
+   the ones that look like a menu above the ones that look like furniture,
+   and hand them to the same reader a photo goes to. */
+const IMG_SKIP = /logo|icon|favicon|sprite|avatar|badge|banner|header|footer|placeholder|pixel|spacer|social|whatsapp|instagram|facebook/i;
+const IMG_WANT = /menu|food|dish|card|carte|price|board|gallery/i;
+const IMG_EXT  = /\.(jpe?g|png|webp)(\?|$)/i;
+
+function imageUrls(html, base) {
+  const found = [];
+  const add = u => {
+    if (!u) return;
+    let abs; try { abs = new URL(u.trim(), base).href; } catch { return; }
+    if (!/^https?:/.test(abs) || IMG_SKIP.test(abs)) return;
+    if (!IMG_EXT.test(abs) && !/wixstatic|squarespace|cdn|images|photo/i.test(abs)) return;
+    if (!found.includes(abs)) found.push(abs);
+  };
+
+  let m;
+  const src = /<img\b[^>]*?\b(?:data-src|data-original|src)\s*=\s*["']([^"']+)["']/gi;
+  while ((m = src.exec(html)) !== null) add(m[1]);
+
+  const sset = /\bsrcset\s*=\s*["']([^"']+)["']/gi;
+  while ((m = sset.exec(html)) !== null)
+    add(m[1].split(',').pop().trim().split(/\s+/)[0]);      /* the largest variant */
+
+  const bg = /background-image\s*:\s*url\((["']?)([^"')]+)\1\)/gi;
+  while ((m = bg.exec(html)) !== null) add(m[2]);
+
+  const og = /<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i.exec(html);
+  if (og) add(og[1]);
+
+  /* a picture called "menu" beats a picture called "hero-3" */
+  return found.sort((a, b) => (IMG_WANT.test(b) ? 1 : 0) - (IMG_WANT.test(a) ? 1 : 0));
+}
+
+/* Download in parallel — three sequential vision calls would blow the
+   webhook's 60 seconds, three parallel ones comfortably do not. */
+async function grabImages(urls, max = 3) {
+  const picked = urls.slice(0, max);
+  const out = await Promise.all(picked.map(async u => {
+    try {
+      const p = await getPage(u, 9000);
+      if (!/^image\//.test(p.type) || p.buf.length < 3000 || p.buf.length > 5e6) return null;
+      const mime = p.type.split(';')[0];
+      return `data:${mime};base64,${p.buf.toString('base64')}`;
+    } catch { return null; }
+  }));
+  return out.filter(Boolean);
+}
+
 async function fromUrl(raw) {
   const u = safeUrl(raw);
   if (!u) {
@@ -210,13 +262,19 @@ async function fromUrl(raw) {
         if (t2.length > 20) return { kind: 'url', images: [], text: t2, note: `🔗 Found a menu PDF linked from <b>${u.hostname}</b> and read that.` };
       } catch { /* fall through to the honest answer below */ }
     }
+    /* the menu is probably the pictures on the page — read those */
+    const imgs = await grabImages(imageUrls(html, page.url));
+    if (imgs.length)
+      return { kind: 'url', images: imgs, text: '',
+        note: `🔗 <b>${u.hostname}</b> shows its menu as pictures, so I\'m reading ${imgs.length === 1 ? 'the image' : `all ${imgs.length} of them`}…` };
+
     /* long page with numbers on it — let the model look rather than refuse */
     if (text.length > 400 && /\d/.test(text))
       return { kind: 'url', images: [], text: text.slice(0, 20000),
                note: `🔗 Read <b>${u.hostname}</b>. I couldn\'t see clear prices, so check them carefully.` };
 
     return { kind: 'url', images: [], text: '',
-      note: `I opened <b>${u.hostname}</b> but couldn\'t find menu text on it — a lot of sites draw their menu with JavaScript or as an image, which I can\'t see. Send me a screenshot of the page and I\'ll read that.` };
+      note: `I opened <b>${u.hostname}</b> but found neither menu text nor a menu picture on it — some sites build the whole page in JavaScript, which I can\'t run. Send me a screenshot of the menu and I\'ll read that.` };
   }
 
   return { kind: 'url', images: [], text: text.slice(0, 20000), note: `🔗 Read the menu from <b>${u.hostname}</b>.` };
@@ -280,4 +338,4 @@ async function intake(m) {
   return null;   /* not an attachment — the caller handles plain text */
 }
 
-module.exports = { intake, fromUrl, findUrl, pdfText, textOps, htmlText, jsonLd, pdfLink, safeUrl };
+module.exports = { intake, fromUrl, findUrl, imageUrls, pdfText, textOps, htmlText, jsonLd, pdfLink, safeUrl };

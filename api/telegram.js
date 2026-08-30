@@ -337,10 +337,8 @@ async function handle(u) {
     await say(chat, got.note || '📸 Reading your menu…');
 
     let read;
-    try {
-      read = got.images.length ? await vision.readMenuPhoto(got.images[0])
-                               : await vision.readMenuText(got.text);
-    } catch (e) {
+    try { read = await readSource(got); }
+    catch (e) {
       console.error('[read]', e.message);
       return say(chat, '😕 I couldn\'t read that one. Try a straighter, brighter shot — or send the menu as text and I\'ll take it that way.');
     }
@@ -424,11 +422,12 @@ async function handle(u) {
     let got2;
     try { got2 = await intake.fromUrl(link); }
     catch (e) { console.error('[url]', e.message); got2 = { text: '', note: 'I couldn\'t open that link.' }; }
-    if (!got2.text) return say(chat, got2.note);
+    if (!got2.text && !got2.images?.length) return say(chat, got2.note);
 
     await say(chat, got2.note);
+    await tg('sendChatAction', { chat_id: chat, action: 'typing' });
     let read2;
-    try { read2 = await vision.readMenuText(got2.text); }
+    try { read2 = await readSource(got2); }
     catch (e) { console.error('[read]', e.message); return say(chat, '😕 I found the page but couldn\'t make a menu out of it. A screenshot works too.'); }
     if (!read2.categories.length)
       return say(chat, 'I opened it but couldn\'t find dishes and prices there. If the menu is on a different page, send me that link — or just send a screenshot.');
@@ -468,6 +467,33 @@ async function handle(u) {
   }
 
   return say(chat, ASK_PHOTO);
+}
+
+/* A source can be several images (a carousel of menu boards), or text, or both.
+   Read them together in parallel and merge into one menu — a merchant sent one
+   menu, not three, so they should see one tree. */
+async function readSource(got) {
+  const jobs = (got.images || []).slice(0, 3).map(i => vision.readMenuPhoto(i));
+  if (got.text) jobs.push(vision.readMenuText(got.text));
+  const reads = (await Promise.all(jobs.map(p => p.catch(e => { console.error('[read]', e.message); return null; }))))
+                  .filter(Boolean);
+  if (!reads.length) throw new Error('nothing could be read');
+
+  const merged = { canteen: null, stall: null, categories: [], unreadable: [] };
+  for (const r of reads) {
+    merged.canteen = merged.canteen || r.canteen;
+    merged.stall   = merged.stall   || r.stall;
+    merged.unreadable.push(...r.unreadable);
+    for (const c of r.categories) {
+      const ex = merged.categories.find(x => (x.name || '') === (c.name || ''));
+      if (ex) {
+        for (const it of c.items)                      /* the same board photographed twice */
+          if (!ex.items.some(y => y.name.toLowerCase() === it.name.toLowerCase())) ex.items.push(it);
+      } else merged.categories.push({ name: c.name, items: [...c.items] });
+    }
+  }
+  merged.unreadable = [...new Set(merged.unreadable)].slice(0, 8);
+  return merged;
 }
 
 function review(chat, d) {
