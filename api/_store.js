@@ -71,10 +71,19 @@ async function publish(court) {
   return next.length;
 }
 
+/* Taking a canteen back down. A merchant who can publish must be able to
+   unpublish — and it is the only way to clear a mistake out of the storefront. */
+async function unpublish(id) {
+  const all = await getPublished();
+  const gone = all.find(c => c.id === id) || null;
+  if (gone) await set(PUB, all.filter(c => c.id !== id));
+  return gone;
+}
+
 /* One in-progress Telegram conversation per chat. */
 const draftKey = id => `foodflow:draft:${id}`;
 const getDraft = id => get(draftKey(id));
 const setDraft = (id, d) => set(draftKey(id), d);
 const clearDraft = id => set(draftKey(id), null);
 
-module.exports = { durable, via, get, set, getPublished, publish, getDraft, setDraft, clearDraft };
+module.exports = { durable, via, get, set, getPublished, publish, unpublish, getDraft, setDraft, clearDraft };

@@ -49,7 +49,8 @@ const SITE = (process.env.PUBLIC_BASE_URL || 'https://lifehacks-foodflow.vercel.
 const COMMANDS = [
   { command: 'start', description: 'What this bot does' },
   { command: 'menu',  description: 'Show what I have so far' },
-  { command: 'diet',  description: 'Set halal / vegetarian flags' },
+  { command: 'diet',   description: 'Set halal / vegetarian flags' },
+  { command: 'remove', description: 'Take a published canteen down' },
   { command: 'new',   description: 'Start over from scratch' },
   { command: 'help',  description: 'How to send a menu' }
 ];
@@ -288,6 +289,14 @@ async function handle(u) {
     }
 
     if (q.data === 'diet')     return dietList(chat);
+    if (q.data.startsWith('rm:')) {
+      const gone = await store.unpublish(q.data.slice(3));
+      if (!gone) return say(chat, 'That one is already gone.');
+      const last = await store.get('foodflow:lastcourt:' + chat);
+      if (last === gone.id) await store.set('foodflow:lastcourt:' + chat, null);
+      await say(chat, `🗑 <b>${esc(gone.name)}</b> is off the storefront.`);
+      return removeList(chat);
+    }
     if (q.data === 'dietdone') return say(chat, '👍 Saved. Customers see those flags straight away, and the food agent filters on them.');
     if (q.data.startsWith('df:')) return dietDish(chat, q.data.slice(3));
     if (q.data.startsWith('ds:')) {
@@ -334,6 +343,7 @@ async function handle(u) {
   }
   if (/^\/(new|reset)/.test(text)) { await store.clearDraft(chat); return say(chat, ASK_PHOTO); }
   if (/^\/diet/.test(text)) return dietList(chat);
+  if (/^\/(remove|delete|unpublish)/.test(text)) return removeList(chat);
   if (/^\/menu/.test(text)) {
     const dnow = await store.getDraft(chat);
     if (dnow?.stalls?.length) return review(chat, dnow);
@@ -773,6 +783,19 @@ async function relocatePublished(chat, loc) {
   c.loc = loc;
   await store.publish(c);
   return c;
+}
+
+/* Everything this deployment has published from Telegram. The seed catalog in
+   catalog.json is never in here, so it can't be deleted by accident. */
+async function removeList(chat) {
+  const all = await store.getPublished();
+  if (!all.length) return say(chat, 'Nothing has been published yet.');
+  return say(chat,
+    '<b>Take a canteen down</b>\n\nIt disappears from the storefront straight away. This can\'t be undone — you\'d have to send the menu again.',
+    keyboard(all.slice(-12).map(c => {
+      const n = c.stalls.reduce((a, s) => a + s.cats.reduce((b, k) => b + k.items.length, 0), 0);
+      return [{ text: `🗑 ${c.name} (${n} dish${n === 1 ? '' : 'es'})`.slice(0, 60), callback_data: 'rm:' + c.id }];
+    }).concat([[{ text: '↩️ Leave them alone', callback_data: 'back' }]])));
 }
 
 async function dietList(chat) {
