@@ -250,6 +250,24 @@ async function handle(u) {
       return review(chat, d);
     }
     if (q.data === 'fixprices') return d ? priceList(chat, d) : say(chat, ASK_PHOTO);
+    if (q.data === 'moreimgs') {
+      if (!d?.moreImages?.length) return say(chat, 'Nothing left to read from that page.');
+      const batch = d.moreImages.slice(0, 5);
+      await say(chat, `📸 Reading ${batch.length} more…`);
+      await tg('sendChatAction', { chat_id: chat, action: 'typing' });
+      const imgs = await intake.grabImages(batch, 5);
+      d.moreImages = d.moreImages.slice(batch.length);
+      if (!imgs.length) { await store.setDraft(chat, d); return say(chat, 'I couldn\'t open those ones. Send a photo of that part of the menu instead.'); }
+      let extra;
+      try { extra = await readSource({ images: imgs, text: '' }); }
+      catch { await store.setDraft(chat, d); return say(chat, 'I couldn\'t make a menu out of those.'); }
+      const before = allItems(d).length;
+      mergeInto(d, extra);
+      await store.setDraft(chat, d);
+      const added = allItems(d).length - before;
+      await say(chat, added ? `Added ${added} more dish${added === 1 ? '' : 'es'}.` : 'Nothing new on those — they were probably the same board.');
+      return review(chat, d);
+    }
     if (q.data.startsWith('p:')) {
       if (!d) return say(chat, ASK_PHOTO);
       const [, si, ci, ii] = q.data.split(':').map(Number);
@@ -371,17 +389,31 @@ async function handle(u) {
     return review(chat, draft);
   }
 
+  /* a pin from the Share-my-location button */
+  if (m.location && draft) {
+    const { latitude: la, longitude: lo } = m.location;
+    draft.loc = (await placeName(la, lo)) || `${la.toFixed(4)}, ${lo.toFixed(4)}`;
+    draft.awaiting = null;
+    await store.setDraft(chat, draft);
+    await say(chat, `📍 Got it — <b>${esc(draft.loc)}</b>.`, dropKeyboard);
+    return review(chat, draft);
+  }
+
+  /* questions are not answers */
+  if (text && draft && isQuestion(text) && draft.awaiting !== 'price')
+    return answerAside(chat, draft, text);
+
   /* answering the name question */
   if (draft?.awaiting === 'name' && text) {
     draft.name = text.slice(0, 60); draft.awaiting = 'loc';
     await store.setDraft(chat, draft);
-    return say(chat, 'Got it. <b>Where is it?</b> (e.g. “Frontier, Science”)',
-      keyboard([[{ text: '⏭ Skip this', callback_data: 'skiploc' }]]));
+    return say(chat, 'Got it. <b>Where is it?</b>\n\nTap 📍 below to drop a pin, or just type it (e.g. “Frontier, Science”).', locKeyboard());
   }
   if (draft?.awaiting === 'loc' && text) {
-    if (!/^skip$/i.test(text)) draft.loc = text.slice(0, 60);
+    if (!/^(⏭\s*)?skip( this)?$/i.test(text.trim())) draft.loc = text.slice(0, 60);
     draft.awaiting = null;
     await store.setDraft(chat, draft);
+    await say(chat, draft.loc ? `📍 <b>${esc(draft.loc)}</b>.` : 'Skipped.', dropKeyboard);
     return review(chat, draft);
   }
 
@@ -433,14 +465,9 @@ async function handle(u) {
       return say(chat, 'I opened it but couldn\'t find dishes and prices there. If the menu is on a different page, send me that link — or just send a screenshot.');
 
     draft = draft || { name: null, loc: null, walk: 10, stalls: [], awaiting: null };
+    if (got2.rest?.length) draft.moreImages = got2.rest;      /* so "what about drinks?" has an answer */
     if (!draft.name && read2.canteen) draft.name = read2.canteen;
-    const sName = read2.stall || draft.stalls[0]?.name || 'Main stall';
-    let st = draft.stalls.find(x => x.name.toLowerCase() === sName.toLowerCase());
-    if (!st) { st = { name: sName, categories: [] }; draft.stalls.push(st); }
-    for (const c of read2.categories) {
-      const ex = st.categories.find(x => (x.name || '') === (c.name || ''));
-      if (ex) ex.items.push(...c.items); else st.categories.push(c);
-    }
+    mergeInto(draft, read2);
     if (!draft.name) {
       draft.awaiting = 'name';
       await store.setDraft(chat, draft);
@@ -494,6 +521,78 @@ async function readSource(got) {
   }
   merged.unreadable = [...new Set(merged.unreadable)].slice(0, 8);
   return merged;
+}
+
+/* A merchant mid-flow will ask things — "what about my drinks?" — and the
+   old code stored that as the canteen's name. A question is never an answer:
+   deal with it, then ask again. */
+const QUESTION = /\?\s*$|^(what|whats|what's|why|how|can|could|would|do|does|did|is|are|was|where|when|who|which|should|any|anything|got|have|hv|u |you )/i;
+const isQuestion = t => QUESTION.test(String(t).trim());
+
+const PENDING = {
+  name:  '<b>What\'s this canteen or coffee shop called?</b>',
+  loc:   '<b>Where is it?</b>',
+  price: 'Send me the price as a number — like <code>1.60</code>.'
+};
+
+async function answerAside(chat, d, text) {
+  const t = text.toLowerCase();
+  const more = d?.moreImages?.length || 0;
+
+  if (/drink|beverage|dessert|side|add on|addon|more|rest|other|missing|all of|everything|didn|not there|left out|incomplete/i.test(t)) {
+    if (more) {
+      await say(chat, `There ${more === 1 ? 'was 1 more picture' : `were ${more} more pictures`} on that page that I haven\'t read yet — that\'s probably where the rest is.`,
+        keyboard([[{ text: `📸 Read the other ${more}`, callback_data: 'moreimgs' }]]));
+    } else {
+      await say(chat,
+        'I only read what was on the pictures I could see. If the drinks or the rest of the menu are on another page or another board, ' +
+        'send me that link or a photo of it and I\'ll add it to this same canteen.');
+    }
+  } else if (/how|what can|help|work/i.test(t)) {
+    await say(chat, HOW_IT_WORKS);
+  } else {
+    await say(chat, 'I can read menus — photos, PDFs, spreadsheets, a voice note, or a link to your site. Anything else I probably can\'t help with.');
+  }
+
+  if (d?.awaiting && PENDING[d.awaiting]) {
+    const extra = d.awaiting === 'loc' ? locKeyboard() : {};
+    return say(chat, PENDING[d.awaiting], extra);
+  }
+  return d ? review(chat, d) : say(chat, ASK_PHOTO);
+}
+
+/* ── location, without making anyone type an address ──────────────────
+   Telegram can hand us a real pin. Reverse-geocoded so the merchant sees a
+   street rather than two decimals they can't check. */
+const locKeyboard = () => ({ reply_markup: {
+  keyboard: [[{ text: '📍 Share my location', request_location: true }], [{ text: '⏭ Skip' }]],
+  resize_keyboard: true, one_time_keyboard: true } });
+const dropKeyboard = { reply_markup: { remove_keyboard: true } };
+
+async function placeName(lat, lon) {
+  try {
+    const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=18&lat=${lat}&lon=${lon}`,
+      { headers: { 'User-Agent': 'FoodFlowBot/1.0 (menu onboarding)' } });
+    if (!r.ok) return null;
+    const a = (await r.json()).address || {};
+    return [a.amenity || a.building || a.road, a.suburb || a.neighbourhood || a.city_district, a.postcode]
+      .filter(Boolean).join(', ').slice(0, 60) || null;
+  } catch { return null; }
+}
+
+/* fold a freshly-read menu into the draft the merchant is building */
+function mergeInto(d, read) {
+  const sName = read.stall || d.stalls[0]?.name || 'Main stall';
+  let st = d.stalls.find(x => x.name.toLowerCase() === sName.toLowerCase());
+  if (!st) { st = { name: sName, categories: [] }; d.stalls.push(st); }
+  for (const c of read.categories) {
+    const ex = st.categories.find(x => (x.name || '') === (c.name || ''));
+    if (ex) {
+      for (const it of c.items)
+        if (!ex.items.some(y => y.name.toLowerCase() === it.name.toLowerCase())) ex.items.push(it);
+    } else st.categories.push({ name: c.name, items: [...c.items] });
+  }
+  return d;
 }
 
 function review(chat, d) {

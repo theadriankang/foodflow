@@ -211,7 +211,7 @@ function imageUrls(html, base) {
 
 /* Download in parallel — three sequential vision calls would blow the
    webhook's 60 seconds, three parallel ones comfortably do not. */
-async function grabImages(urls, max = 3) {
+async function grabImages(urls, max = 5) {
   const picked = urls.slice(0, max);
   const out = await Promise.all(picked.map(async u => {
     try {
@@ -262,11 +262,17 @@ async function fromUrl(raw) {
         if (t2.length > 20) return { kind: 'url', images: [], text: t2, note: `🔗 Found a menu PDF linked from <b>${u.hostname}</b> and read that.` };
       } catch { /* fall through to the honest answer below */ }
     }
-    /* the menu is probably the pictures on the page — read those */
-    const imgs = await grabImages(imageUrls(html, page.url));
-    if (imgs.length)
-      return { kind: 'url', images: imgs, text: '',
-        note: `🔗 <b>${u.hostname}</b> shows its menu as pictures, so I\'m reading ${imgs.length === 1 ? 'the image' : `all ${imgs.length} of them`}…` };
+    /* the menu is probably the pictures on the page — read those.
+       A big menu is often a dozen boards; read a batch now and keep the rest
+       so the merchant can pull them in without sending the link again. */
+    const all  = imageUrls(html, page.url);
+    const imgs = await grabImages(all, 5);
+    if (imgs.length) {
+      const rest = all.slice(5);
+      return { kind: 'url', images: imgs, text: '', rest,
+        note: `🔗 <b>${u.hostname}</b> shows its menu as pictures, so I\'m reading ${imgs.length === 1 ? 'the image' : `${imgs.length} of them`}…` +
+              (rest.length ? `\n<i>There are ${rest.length} more on that page — I\'ll offer them after.</i>` : '') };
+    }
 
     /* long page with numbers on it — let the model look rather than refuse */
     if (text.length > 400 && /\d/.test(text))
@@ -338,4 +344,4 @@ async function intake(m) {
   return null;   /* not an attachment — the caller handles plain text */
 }
 
-module.exports = { intake, fromUrl, findUrl, imageUrls, pdfText, textOps, htmlText, jsonLd, pdfLink, safeUrl };
+module.exports = { intake, fromUrl, findUrl, imageUrls, grabImages, pdfText, textOps, htmlText, jsonLd, pdfLink, safeUrl };
