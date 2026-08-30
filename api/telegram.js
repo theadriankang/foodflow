@@ -10,6 +10,7 @@
 const store  = require('./_store.js');
 const vision = require('./_menuvision.js');
 const intake = require('./_intake.js');
+const brain  = require('./_understand.js');
 const base   = require('./catalog.json');
 
 const TOKEN  = process.env.TELEGRAM_BOT_TOKEN;
@@ -250,6 +251,14 @@ async function handle(u) {
       return review(chat, d);
     }
     if (q.data === 'fixprices') return d ? priceList(chat, d) : say(chat, ASK_PHOTO);
+    if (q.data === 'addnew') {
+      if (!d?.pendingAdd?.length) return say(chat, 'Nothing waiting to be added.');
+      const n = addItems(d, d.pendingAdd);
+      d.pendingAdd = null;
+      await store.setDraft(chat, d);
+      await say(chat, n ? `Added ${n} dish${n === 1 ? '' : 'es'}.` : 'They were already on the menu.');
+      return review(chat, d);
+    }
     if (q.data === 'moreimgs') {
       if (!d?.moreImages?.length) return say(chat, 'Nothing left to read from that page.');
       const batch = d.moreImages.slice(0, 5);
@@ -399,8 +408,9 @@ async function handle(u) {
     return review(chat, draft);
   }
 
-  /* questions are not answers */
-  if (text && draft && isQuestion(text) && draft.awaiting !== 'price')
+  /* A question asked while the bot is waiting on something must not be eaten
+     as the answer. With nothing pending, it falls through to the model below. */
+  if (text && draft?.awaiting && draft.awaiting !== 'price' && isQuestion(text))
     return answerAside(chat, draft, text);
 
   /* answering the name question */
@@ -432,17 +442,29 @@ async function handle(u) {
     if (!num) return say(chat, 'Just the number, please — like <code>1.60</code>.');
   }
 
-  /* "dish name 4.50" fills in a missing price */
-  const priceFix = text.match(/^(.+?)\s+\$?(\d+(?:\.\d{1,2})?)$/);
-  if (draft && priceFix) {
-    const want = priceFix[1].trim().toLowerCase(), val = Number(priceFix[2]);
-    let hit = null;
-    for (const s of draft.stalls) for (const c of s.categories) for (const i of c.items)
-      if (i.name.toLowerCase().includes(want) || want.includes(i.name.toLowerCase())) hit = i;
-    if (hit) {
-      hit.price = val; await store.setDraft(chat, draft);
-      await say(chat, `Set <b>${esc(hit.name)}</b> to ${money(val)}.`);
-      return review(chat, draft);
+  /* one price or twenty, one per line or several to a line, typos and all */
+  if (draft && text) {
+    const pairs = brain.parsePairs(text);
+    if (pairs.length) {
+      const { set, changed, unmatched } = brain.applyPairs(draft, pairs);
+      const done = [...set, ...changed];
+      if (done.length) {
+        await store.setDraft(chat, draft);
+        const lines = done.map(x =>
+          `• <b>${esc(x.name)}</b> — ${money(x.price)}${x.was != null ? ` <i>(was ${money(x.was)})</i>` : ''}`);
+        await say(chat, `Updated ${lines.length} dish${lines.length === 1 ? '' : 'es'}:\n${lines.join('\n')}`);
+      }
+      /* a price for something not on the menu is an addition, not a failure */
+      if (unmatched.length) {
+        draft.pendingAdd = unmatched;
+        await store.setDraft(chat, draft);
+        const names = unmatched.map(u => `<b>${esc(u.name)}</b> — ${money(u.price)}`).join('\n');
+        return say(chat, `${done.length ? 'The rest isn\'t' : unmatched.length === 1 ? 'That one isn\'t' : 'Those aren\'t'} on this menu yet:\n${names}`,
+          keyboard([
+            [{ text: `➕ Add ${unmatched.length === 1 ? 'it' : `all ${unmatched.length}`}`, callback_data: 'addnew' }],
+            [{ text: '👌 No, leave it', callback_data: 'back' }]]));
+      }
+      if (done.length) return review(chat, draft);
     }
   }
 
@@ -493,7 +515,91 @@ async function handle(u) {
     }
   }
 
+  /* Nothing matched. Rather than replying with the same stock line, ask the
+     model what they meant — it returns an action, and code performs it. */
+  if (text) {
+    let act = null;
+    try { act = await brain.understand(text, draft); }
+    catch (e) { console.error('[understand]', e.message); }
+
+    if (act) {
+      if (act.action === 'set_name' && act.value && draft) {
+        draft.name = act.value; draft.awaiting = null;
+        await store.setDraft(chat, draft);
+        await say(chat, act.reply || `Got it — <b>${esc(draft.name)}</b>.`);
+        return review(chat, draft);
+      }
+      if (act.action === 'set_location' && act.value && draft) {
+        draft.loc = act.value; draft.awaiting = null;
+        await store.setDraft(chat, draft);
+        await say(chat, act.reply || `📍 <b>${esc(draft.loc)}</b>.`, dropKeyboard);
+        return review(chat, draft);
+      }
+      if (draft && (act.action === 'set_prices' || act.action === 'add_items') && (act.prices.length || act.items.length)) {
+        const { set, changed, unmatched } = brain.applyPairs(draft, act.prices);
+        const added = addItems(draft, [...act.items, ...unmatched]);
+        await store.setDraft(chat, draft);
+        const bits = [];
+        if (set.length || changed.length) bits.push(`updated ${set.length + changed.length}`);
+        if (added) bits.push(`added ${added}`);
+        await say(chat, act.reply || (bits.length ? `Done — ${bits.join(', ')}.` : 'Nothing to change there.'));
+        return review(chat, draft);
+      }
+      if (draft && act.action === 'remove_items' && act.remove.length) {
+        const gone = removeItems(draft, act.remove);
+        await store.setDraft(chat, draft);
+        await say(chat, act.reply || (gone ? `Removed ${gone}.` : 'I couldn\'t find those.'));
+        return review(chat, draft);
+      }
+      if (draft && act.action === 'rename' && act.rename.length) {
+        let n = 0;
+        for (const r of act.rename) {
+          const d = brain.findDish(draft, r.from);
+          if (d) { d.name = r.to; n++; }
+        }
+        await store.setDraft(chat, draft);
+        await say(chat, act.reply || (n ? `Renamed ${n}.` : 'I couldn\'t find that one.'));
+        return review(chat, draft);
+      }
+      if (act.reply) {
+        await say(chat, esc(act.reply));
+        return draft?.stalls?.length ? review(chat, draft) : undefined;
+      }
+    }
+  }
+
   return say(chat, ASK_PHOTO);
+}
+
+/* add dishes the merchant named but the menu didn't have */
+function addItems(d, items) {
+  if (!items.length) return 0;
+  const stall = d.stalls[0] || (d.stalls.push({ name: 'Main stall', categories: [] }), d.stalls[0]);
+  let n = 0;
+  for (const it of items) {
+    if (brain.findDish(d, it.name)) continue;
+    const catName = it.category || null;
+    let c = stall.categories.find(x => (x.name || '') === (catName || ''));
+    if (!c) { c = { name: catName, items: [] }; stall.categories.push(c); }
+    c.items.push({ name: it.name, price: it.price ?? null });
+    n++;
+  }
+  return n;
+}
+
+function removeItems(d, names) {
+  let n = 0;
+  for (const name of names) {
+    const dish = brain.findDish(d, name);
+    if (!dish) continue;
+    for (const s of d.stalls) for (const c of s.categories) {
+      const i = c.items.indexOf(dish);
+      if (i >= 0) { c.items.splice(i, 1); n++; }
+    }
+  }
+  d.stalls.forEach(s => { s.categories = s.categories.filter(c => c.items.length); });
+  d.stalls = d.stalls.filter(s => s.categories.length);
+  return n;
 }
 
 /* A source can be several images (a carousel of menu boards), or text, or both.
@@ -551,7 +657,12 @@ async function answerAside(chat, d, text) {
   } else if (/how|what can|help|work/i.test(t)) {
     await say(chat, HOW_IT_WORKS);
   } else {
-    await say(chat, 'I can read menus — photos, PDFs, spreadsheets, a voice note, or a link to your site. Anything else I probably can\'t help with.');
+    let said = false;
+    try {
+      const act = await brain.understand(text, d);
+      if (act?.reply) { await say(chat, esc(act.reply)); said = true; }
+    } catch (e) { console.error('[understand]', e.message); }
+    if (!said) await say(chat, 'I can read menus — photos, PDFs, spreadsheets, a voice note, or a link to your site. Anything else I probably can\'t help with.');
   }
 
   if (d?.awaiting && PENDING[d.awaiting]) {
