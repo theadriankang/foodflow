@@ -113,8 +113,13 @@ Decide what they meant and reply with JSON only.
 }
 
 Rules:
-- Only include the fields your action needs. "reply" is always required: one or two
-  short sentences, plain and warm, no emoji, addressed to the merchant.
+- One message can ask for several things at once. Fill in EVERY field that applies
+  — "it's called Eighteen Chefs, and make the ones with no price 4.90" is a "value"
+  AND a "prices" list. "action" names the main one; the other fields are still used.
+- If they give a blanket price rule ("the no-price ones are 4.90", "everything is $5"),
+  expand it yourself into one entry per affected dish, using the menu listing above.
+  Dishes shown as "no price yet" are the ones with no price.
+- Strip lead-ins: "it's called X", "we're X", "name it X" all give value "X".
 - "name" fields must be dish names as the merchant wrote them.
 - Never invent a price. If they mention a dish with no price, price is null.
 - set_name is for the canteen/shop name, set_location for where it is.

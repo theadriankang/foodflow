@@ -423,7 +423,19 @@ async function handle(u) {
   if (text && draft?.awaiting && draft.awaiting !== 'price' && isQuestion(text))
     return answerAside(chat, draft, text);
 
-  /* answering the name question */
+  /* answering the name question — unless they packed instructions in with it */
+  if (draft?.awaiting === 'name' && text && looksCompound(text)) {
+    const act = await understandSafely(text, draft);
+    if (act && (act.value || act.prices.length || act.items.length)) {
+      const done = await applyAction(chat, draft, act);
+      if (!draft.name) { draft.awaiting = 'name'; await store.setDraft(chat, draft);
+        return say(chat, `${done}\n\n<b>What\'s this canteen or coffee shop called?</b>`); }
+      draft.awaiting = 'loc'; await store.setDraft(chat, draft);
+      await say(chat, done);
+      return say(chat, 'Got it. <b>Where is it?</b>\n\nTap 📍 below to drop a pin, or just type it (e.g. “Frontier, Science”).', locKeyboard());
+    }
+  }
+
   if (draft?.awaiting === 'name' && text) {
     draft.name = text.slice(0, 60); draft.awaiting = 'loc';
     await store.setDraft(chat, draft);
@@ -726,6 +738,46 @@ function mergeInto(d, read) {
     } else st.categories.push({ name: c.name, items: [...c.items] });
   }
   return d;
+}
+
+/* A name is one short line. Anything with a second line, an instruction verb or
+   real length is a request, and must not be stored as the canteen's name. */
+const looksCompound = t =>
+  /\n/.test(t.trim()) || t.trim().length > 45 ||
+  /\b(make|set|change|update|also|add|remove|price|prices|dollar|\$\d)\b/i.test(t);
+
+async function understandSafely(text, draft) {
+  try { return await brain.understand(text, draft); }
+  catch (e) { console.error('[understand]', e.message); return null; }
+}
+
+/* Apply every field the model filled in — one message can ask for several
+   things. Returns the sentence describing what actually changed. */
+async function applyAction(chat, d, act) {
+  const done = [];
+  if (act.value && (act.action === 'set_name' || !d.name)) { d.name = act.value; done.push(`name set to <b>${esc(d.name)}</b>`); }
+  else if (act.value && act.action === 'set_location')     { d.loc  = act.value; done.push(`location set to <b>${esc(d.loc)}</b>`); }
+
+  if (act.prices.length) {
+    const { set, changed } = brain.applyPairs(d, act.prices);
+    const n = set.length + changed.length;
+    if (n) done.push(`${n} price${n === 1 ? '' : 's'} filled in`);
+  }
+  if (act.items.length) {
+    const n = addItems(d, act.items);
+    if (n) done.push(`${n} dish${n === 1 ? '' : 'es'} added`);
+  }
+  if (act.remove.length) {
+    const n = removeItems(d, act.remove);
+    if (n) done.push(`${n} removed`);
+  }
+  if (act.rename.length) {
+    let n = 0;
+    for (const r of act.rename) { const dish = brain.findDish(d, r.from); if (dish) { dish.name = r.to; n++; } }
+    if (n) done.push(`${n} renamed`);
+  }
+  await store.setDraft(chat, d);
+  return done.length ? `Done — ${done.join(', ')}.` : 'I couldn\'t work out what to change there.';
 }
 
 function review(chat, d) {
