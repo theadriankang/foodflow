@@ -17,12 +17,22 @@ const API    = m => `https://api.telegram.org/bot${TOKEN}/${m}`;
 
 /* ── talking to Telegram ─────────────────────────────────────────────── */
 async function tg(method, body) {
-  const r = await fetch(API(method), {
-    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
-  });
-  const j = await r.json();
-  if (!j.ok) console.error('[tg]', method, j.description);
-  return j.result;
+  /* Telegram can answer with plain text (rate limits, bad token, proxies), so never
+     assume JSON — a parse error here used to take the whole handler down with it. */
+  try {
+    const r = await fetch(API(method), {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+    });
+    const text = await r.text();
+    let j;
+    try { j = JSON.parse(text); }
+    catch { console.error('[tg]', method, r.status, text.slice(0, 160)); return null; }
+    if (!j.ok) console.error('[tg]', method, j.description);
+    return j.result ?? null;
+  } catch (e) {
+    console.error('[tg]', method, e.message);
+    return null;
+  }
 }
 const say = (chat, text, extra = {}) =>
   tg('sendMessage', { chat_id: chat, text, parse_mode: 'HTML', disable_web_page_preview: true, ...extra });
@@ -163,10 +173,21 @@ module.exports = async (req, res) => {
     return res.status(401).json({ ok: false });
 
   const u = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : (req.body || {});
-  res.status(200).json({ ok: true });          /* ack first — Telegram retries slow replies */
 
-  try { await handle(u); }
-  catch (e) { console.error('[telegram]', e); }
+  /* Do the work BEFORE responding. On Vercel the invocation ends the moment the
+     response is sent, so anything awaited after res.json() is simply never run.
+     Telegram allows 60s for a webhook reply, which is plenty for one vision call. */
+  try {
+    await handle(u);
+  } catch (e) {
+    console.error('[telegram]', e);
+    const chat = u.message?.chat?.id || u.callback_query?.message?.chat?.id;
+    if (chat) {
+      try { await say(chat, `⚠️ Something went wrong on my side:\n<code>${esc(e.message)}</code>\n\nTry again, or send /new to start over.`); }
+      catch (_) { /* nothing more we can do */ }
+    }
+  }
+  return res.status(200).json({ ok: true });
 };
 
 async function handle(u) {
