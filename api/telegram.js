@@ -9,6 +9,7 @@
 
 const store  = require('./_store.js');
 const vision = require('./_menuvision.js');
+const intake = require('./_intake.js');
 const base   = require('./catalog.json');
 
 const TOKEN  = process.env.TELEGRAM_BOT_TOKEN;
@@ -311,21 +312,32 @@ async function handle(u) {
 
   let draft = await store.getDraft(chat);
 
-  /* photo — the main path */
-  const photo = m.photo ? m.photo[m.photo.length - 1]
-              : (m.document && /^image\//.test(m.document.mime_type || '') ? m.document : null);
+  /* attachments — photo, PDF, spreadsheet, voice note, video cover frame.
+     The merchant sends whatever they have; _intake normalises it to images or text. */
+  let got = null;
+  try { got = await intake.intake(m); }
+  catch (e) {
+    console.error('[intake]', e.message);
+    return say(chat, '😕 I couldn\'t open that file. A photo of the menu works best.');
+  }
 
-  if (photo) {
+  if (got) {
+    /* nothing readable in it — say why, don't fail silently */
+    if (!got.images.length && !got.text) return say(chat, got.note || ASK_PHOTO);
+
     await tg('sendChatAction', { chat_id: chat, action: 'typing' });
-    await say(chat, '📸 Reading your menu…');
+    await say(chat, got.note || '📸 Reading your menu…');
+
     let read;
-    try { read = await vision.readMenuPhoto(await photoAsDataUrl(photo.file_id)); }
-    catch (e) {
-      console.error('[vision]', e.message);
+    try {
+      read = got.images.length ? await vision.readMenuPhoto(got.images[0])
+                               : await vision.readMenuText(got.text);
+    } catch (e) {
+      console.error('[read]', e.message);
       return say(chat, '😕 I couldn\'t read that one. Try a straighter, brighter shot — or send the menu as text and I\'ll take it that way.');
     }
     if (!read.categories.length)
-      return say(chat, 'I couldn\'t find any dishes on that. If the board is long, photograph it in two halves and send them one at a time.');
+      return say(chat, 'I couldn\'t find any dishes in that. If the board is long, photograph it in two halves and send them one at a time.');
 
     draft = draft || { name: null, loc: null, walk: 10, stalls: [], awaiting: null };
     if (!draft.name && read.canteen) draft.name = read.canteen;

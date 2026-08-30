@@ -30,8 +30,28 @@ Reply with JSON only:
   "unreadable": [string]
 }`;
 
-async function readMenuPhoto(imageUrl) {
-  if (!KEY) throw new Error('no OPENAI_API_KEY — photo reading needs the model');
+/* The same rules, for a menu that arrived as text rather than a picture —
+   a PDF, a spreadsheet, a voice note, or something typed straight into the chat.
+   Identical constraints: never invent a dish, never invent a price, never invent
+   a category the source didn't print. */
+const TEXT_PROMPT = PROMPT.replace(
+  'You are reading a photo of a food stall or canteen menu, most likely in Singapore.',
+  'You are reading the text of a food stall or canteen menu, most likely in Singapore. ' +
+  'It may be messy — extracted from a PDF, a spreadsheet, or transcribed from someone ' +
+  'reading it aloud. Ignore page numbers, addresses, opening hours and other non-menu lines.'
+);
+
+const readMenuText = text =>
+  callModel([{ role: 'user', content: `${TEXT_PROMPT}\n\n--- MENU ---\n${String(text).slice(0, 12000)}` }]);
+
+const readMenuPhoto = imageUrl =>
+  callModel([{ role: 'user', content: [
+    { type: 'text', text: PROMPT },
+    { type: 'image_url', image_url: { url: imageUrl, detail: 'high' } }
+  ] }]);
+
+async function callModel(messages) {
+  if (!KEY) throw new Error('no OPENAI_API_KEY — reading a menu needs the model');
 
   const r = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
@@ -40,19 +60,13 @@ async function readMenuPhoto(imageUrl) {
       model: MODEL,
       temperature: 0,
       response_format: { type: 'json_object' },
-      messages: [{
-        role: 'user',
-        content: [
-          { type: 'text', text: PROMPT },
-          { type: 'image_url', image_url: { url: imageUrl, detail: 'high' } }
-        ]
-      }]
+      messages
     })
   });
 
   if (!r.ok) {
     const body = await r.text();
-    throw new Error(`vision ${r.status}: ${body.slice(0, 200)}`);
+    throw new Error(`menu read ${r.status}: ${body.slice(0, 200)}`);
   }
   const data = await r.json();
   const out  = JSON.parse(data.choices?.[0]?.message?.content || '{}');
@@ -75,4 +89,4 @@ async function readMenuPhoto(imageUrl) {
   };
 }
 
-module.exports = { readMenuPhoto };
+module.exports = { readMenuPhoto, readMenuText };
