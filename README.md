@@ -6,7 +6,7 @@ Discover, decide and pay for campus food in a single conversation, without ever 
 
 **Live:** <https://lifehacks-foodflow.vercel.app>
 
-**Merchant onboarding bot:** message the FoodFlow Agent on Telegram and send it a photo of any menu.
+**Merchant onboarding bot:** [@agentfoodflow_bot](https://t.me/agentfoodflow_bot) — send it a photo of any menu.
 
 ---
 

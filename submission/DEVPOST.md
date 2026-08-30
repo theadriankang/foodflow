@@ -1,6 +1,6 @@
 # FoodFlow — Devpost submission copy
 
-Paste each section into the matching Devpost field. Replace <https://lifehacks-foodflow.vercel.app> and `<BOT>` before submitting.
+Paste each section into the matching Devpost field. Live URL and bot handle are filled in — paste and go.
 
 ---
 
@@ -140,5 +140,5 @@ The hard part of agentic commerce for small merchants isn't the agent. It's that
 ## Links
 
 - **Live demo:** <https://lifehacks-foodflow.vercel.app>
-- **Merchant onboarding bot:** `t.me/<BOT>` — send it a photo of any menu
+- **Merchant onboarding bot:** `t.me/agentfoodflow_bot` — send it a photo of any menu
 - **Source:** https://github.com/theadriankang/foodflow
