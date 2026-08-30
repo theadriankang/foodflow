@@ -4,7 +4,9 @@
 
 Discover, decide and pay for campus food in a single conversation, without ever leaving the chat window. Built around six real NUS canteens and the stalls in them.
 
-**Live:** _add your Vercel URL here_
+**Live:** <https://lifehacks-foodflow.vercel.app>
+
+**Merchant onboarding bot:** message the FoodFlow Agent on Telegram and send it a photo of any menu.
 
 ---
 
@@ -169,6 +171,32 @@ Reading a menu photo means guessing, so the guesses are split by what happens wh
 
 Dietary flags stay empty until the merchant sets them. The bot says so when it publishes.
 
+### What the bot accepts
+
+A merchant doesn't think in file formats, so the bot branches on nothing — everything is normalised to images or text and read the same way (`api/_intake.js`).
+
+| They send | What happens |
+|---|---|
+| **Photo** of the menu board | Read by the vision model |
+| **PDF** | Text pulled straight out of the FlateDecode streams with `zlib` — no dependency. A scan with no text layer is detected and reported, not silently failed |
+| **CSV / TXT / TSV / MD** | Read as text |
+| **Voice note** | Transcribed. Reading a menu aloud is the one input a stall owner can give with their hands full |
+| **Video** | Telegram's cover frame is read, with an honest warning that it's one small frame |
+| **A link to their website** | Page text plus any schema.org `ld+json`. No prices on the page usually means a JavaScript shell — it follows a linked PDF, or reads the menu **images** off the page, which is what most restaurant sites actually are |
+
+Every path ends in the same review tree, and a menu spread over several pictures is merged into one.
+
+### Correcting it
+
+Menus are wrong and merchants type like people, so the correction path has two layers (`api/_understand.js`):
+
+1. **Deterministic and instant.** Dish/price pairs in any layout — one per line or several to a line, dashes, colons, commas — matched to the draft token by token with a small edit distance. `classis caesar` finds *Classic Caesar*; `sausage mushroom sauce` finds *Sausage with Mushroom Sauce*.
+2. **Then the model, returning an action** — `set_prices`, `add_items`, `remove_items`, `rename`, `set_name`, `set_location`, `answer` — which code performs. *"Take off the striploin, we stopped selling it"* removes a dish. *"It's called Eighteen Chefs, and make the no-price ones 4.90"* does both in one message.
+
+**The model never writes to the catalog and never decides what a price is**, and every confirmation is written by code after the write succeeds — so the bot cannot announce a change it didn't make. Same split as the customer agent: reasoning proposes, deterministic code disposes.
+
+Commands are registered with Telegram, so the ☰ menu lists them: `/start`, `/menu`, `/diet`, `/remove`, `/new`, `/help`. `/diet` is where the merchant confirms halal and vegetarian — the two flags the model is never allowed to infer — writing straight to the live catalog. `/remove` takes a canteen back down. A published canteen stays editable: *"change my storefront name to X"* rewrites it live.
+
 ### Setting it up
 
 1. Message [@BotFather](https://t.me/BotFather) → `/newbot` → copy the token.
@@ -183,7 +211,13 @@ OPENAI_API_KEY=sk-...            # photo reading needs the model
 3. Point Telegram at your deployment (once):
 
 ```bash
-curl "https://api.telegram.org/bot<TOKEN>/setWebhook?url=https://<your-app>.vercel.app/api/telegram&secret_token=<SECRET>"
+curl "https://api.telegram.org/bot<TOKEN>/setWebhook?url=https://lifehacks-foodflow.vercel.app/api/telegram&secret_token=<SECRET>"
+```
+
+4. Register the ☰ command menu (once):
+
+```bash
+curl "https://lifehacks-foodflow.vercel.app/api/telegram?setup=1"
 ```
 
 4. Message your bot `/start` and send a photo of any menu.

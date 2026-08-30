@@ -1,6 +1,6 @@
 # FoodFlow — Devpost submission copy
 
-Paste each section into the matching Devpost field. Replace `<LIVE URL>` and `<BOT>` before submitting.
+Paste each section into the matching Devpost field. Replace <https://lifehacks-foodflow.vercel.app> and `<BOT>` before submitting.
 
 ---
 
@@ -20,7 +20,11 @@ That assumption quietly excludes the merchants who need this most. So we built f
 
 **For the customer.** One conversation: "something warm and soupy, no pork, under $6, near Frontier." The agent understands the constraint, filters six real NUS canteens, explains each pick in the customer's own words, builds a cart that can span stalls, and completes payment in the same window. Voice works too — press and hold, speak, and the agent replies out loud.
 
-**For the merchant.** Four ways in, all resolving to the same published agent:
+**For the merchant.** Send the bot whatever you already have — a **photo** of the menu board, a **PDF**, a **spreadsheet**, a **voice note** reading it out, or a **link to your website** — and it comes back as a menu you check and publish. Websites that show their menu as a gallery of pictures work too: it reads the pictures.
+
+Corrections are typed however people type. *"teriyaki salmon - 8.9, classis caesar - 7.9"* fills in two prices despite the typo. *"Take off the striploin, we stopped selling it"* removes a dish. *"It's called Eighteen Chefs, and make the no-price ones 4.90"* does both at once.
+
+Four ways in, all resolving to the same published agent:
 
 | Merchant has | How they adopt it |
 |---|---|
@@ -104,12 +108,19 @@ We'd rather a judge learn this from us than find it themselves.
 | The model call, when a key is set | Order status — advances on a timer |
 | Server-side pricing and the settlement split | Merchant payouts — the split is computed and shown, not paid |
 
+## Demo videos
+
+- `submission/video/foodflow-customer-discover-decide-pay.mp4` — the customer journey: one conversation from a constrained request through to authorisation and collection.
+- `submission/video/foodflow-merchant-onboarding-telegram.mp4` — the merchant journey: a menu becomes a live, orderable catalog inside Telegram.
+
 ## Challenges we ran into
 
 - **The catalog was duplicated in three places** in the prototype we inherited — client array, server array, merchant upload — so publishing a menu changed nothing the agent could see. Collapsing it to one `/api/catalog` was the single highest-value fix.
 - **Serverless kills you quietly.** Our Telegram webhook acked Telegram first and did the work after, which is correct on a long-lived server and fatally wrong on Vercel — the invocation ends the moment the response is sent, so menu-photo onboarding silently did nothing in production while every log looked healthy.
 - **Vercel's filesystem is read-only at runtime**, so a published menu can't be written back to `catalog.json`. Published catalogs go to a KV store, with an in-memory fallback so the demo survives a missing integration; `/api/health` reports which mode is live rather than making anyone guess.
 - **Deciding what the model isn't allowed to infer** took longer than building the inference. "Halal" was the argument that settled it.
+- **A model that narrates.** Asked to rename a published canteen, it replied "I've noted your new storefront name" — and nothing had changed, because the draft had been cleared at publish. Now code writes every confirmation, after the write, from what actually changed. A model may decide what was meant; it may never report what was done.
+- **Flows that trap the person using them.** Asked "what's this canteen called?", a merchant typed "waht abt my drinks selections?" and we stored that as the canteen's name. It shipped to the storefront that way. Questions are now detected and answered, and the pending question asked again.
 
 ## What we learned
 
@@ -128,6 +139,6 @@ The hard part of agentic commerce for small merchants isn't the agent. It's that
 
 ## Links
 
-- **Live demo:** `<LIVE URL>`
+- **Live demo:** <https://lifehacks-foodflow.vercel.app>
 - **Merchant onboarding bot:** `t.me/<BOT>` — send it a photo of any menu
 - **Source:** https://github.com/theadriankang/foodflow
